@@ -53,6 +53,8 @@ ifelse(@HAVE_DBUS@, 1, [dnl
 ; log-time = no
 ; log-backtrace = 0
 
+# resample-method defaults to  speex-float-1 on most architectures,
+# speex-fixed-1 on ARM
 ; resample-method = speex-float-1
 ; avoid-resampling = false
 ; enable-remixing = yes
