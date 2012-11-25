@@ -123,8 +123,13 @@ static int (* const init_table[])(pa_resampler *r) = {
 static pa_resample_method_t choose_auto_resampler(pa_resample_flags_t flags) {
     pa_resample_method_t method;
 
+#  ifdef __arm__
+    if (pa_resample_method_supported(PA_RESAMPLER_SPEEX_FIXED_BASE + 1))
+        method = PA_RESAMPLER_SPEEX_FIXED_BASE + 1;
+#else
     if (pa_resample_method_supported(PA_RESAMPLER_SPEEX_FLOAT_BASE + 1))
         method = PA_RESAMPLER_SPEEX_FLOAT_BASE + 1;
+#endif
     else if (flags & PA_RESAMPLER_VARIABLE_RATE)
         method = PA_RESAMPLER_TRIVIAL;
     else
