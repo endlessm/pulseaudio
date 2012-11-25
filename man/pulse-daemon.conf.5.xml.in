@@ -118,6 +118,8 @@ License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
       (usually up to around 20 ms, in rare cases more).
       See the output of <opt>dump-resample-methods</opt> for a complete list of all
       available resamplers. Defaults to <opt>speex-float-1</opt>. The
+      available resamplers. Defaults to <opt>speex-float-1</opt> on most
+      achitectures and <opt>speex-fixed-1</opt> on ARM. The
       <opt>--resample-method</opt> command line option takes precedence.
       Note that some modules overwrite or allow overwriting of the
       resampler to use.</p>
