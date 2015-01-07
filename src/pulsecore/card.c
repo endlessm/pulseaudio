@@ -82,6 +82,25 @@ void pa_card_profile_set_available(pa_card_profile *c, pa_available_t available)
     pa_hook_fire(&core->hooks[PA_CORE_HOOK_CARD_PROFILE_AVAILABLE_CHANGED], c);
 }
 
+bool pa_card_profile_contains_available_ports(pa_card_profile *c) {
+    pa_card *card;
+    pa_device_port *port;
+    void *state;
+
+    pa_assert(c);
+
+    card = c->card;
+    pa_assert(card);
+
+    PA_HASHMAP_FOREACH(port, card->ports, state) {
+	if (pa_hashmap_get(port->profiles, c->name)
+	    && port->available == PA_AVAILABLE_YES)
+	    return true;
+    }
+
+    return false;
+}
+
 pa_card_new_data* pa_card_new_data_init(pa_card_new_data *data) {
     pa_assert(data);
 
