@@ -121,6 +121,12 @@ static int try_to_switch_profile(pa_device_port *port) {
     pa_log_debug("Finding best profile for port %s, preferred = %s",
                  port->name, pa_strnull(port->preferred_profile));
 
+    /* We don't want to switch to another profile automatically if the currently
+       active profile has a higher priority than whatever profile would be selected
+       in the loop below, but only if it contains at least one available port */
+    if (pa_card_profile_contains_available_ports(port->card->active_profile, port->direction))
+        best_profile = port->card->active_profile;
+
     PA_HASHMAP_FOREACH(profile, port->profiles, state) {
         bool good = false;
         const char *name;
@@ -155,6 +161,11 @@ static int try_to_switch_profile(pa_device_port *port) {
 
     if (!best_profile) {
         pa_log_debug("No suitable profile found");
+        return -1;
+    }
+
+    if (best_profile == port->card->active_profile) {
+        pa_log_debug("No better profile found");
         return -1;
     }
 
