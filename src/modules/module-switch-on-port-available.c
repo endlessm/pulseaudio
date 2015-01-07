@@ -78,11 +78,17 @@ static bool profile_good_for_input(pa_card_profile *profile) {
     return true;
 }
 
-static int try_to_switch_profile(pa_device_port *port) {
+static int try_to_switch_profile(pa_card *card, pa_device_port *port) {
     pa_card_profile *best_profile = NULL, *profile;
     void *state;
 
     pa_log_debug("Finding best profile");
+
+    /* We don't want to switch to another profile automatically if the currently
+       active profile has a higher priority than whatever profile would be selected
+       in the loop below, but only if it contains at least one available port */
+    if (pa_card_profile_contains_available_ports(card->active_profile))
+        best_profile = card->active_profile;
 
     PA_HASHMAP_FOREACH(profile, port->profiles, state) {
         bool good = false;
@@ -109,6 +115,11 @@ static int try_to_switch_profile(pa_device_port *port) {
 
     if (!best_profile) {
         pa_log_debug("No suitable profile found");
+        return -1;
+    }
+
+    if (best_profile == card->active_profile) {
+        pa_log_debug("No better profile found");
         return -1;
     }
 
@@ -182,7 +193,7 @@ static pa_hook_result_t port_available_hook_callback(pa_core *c, pa_device_port 
             return PA_HOOK_OK;
 
         if (!is_active_profile) {
-            if (try_to_switch_profile(port) < 0)
+            if (try_to_switch_profile(card, port) < 0)
                 return PA_HOOK_OK;
 
             pa_assert(card->active_profile == pa_hashmap_get(port->profiles, card->active_profile->name));
@@ -215,7 +226,7 @@ static pa_hook_result_t port_available_hook_callback(pa_core *c, pa_device_port 
             p2 = find_best_port(card->ports, port->direction);
 
             if (p2 && p2 != port && p2->available != PA_AVAILABLE_NO) {
-                if (try_to_switch_profile(p2) < 0)
+                if (try_to_switch_profile(card, p2) < 0)
                     return PA_HOOK_OK;
 
                 pa_assert(card->active_profile == pa_hashmap_get(p2->profiles, card->active_profile->name));
