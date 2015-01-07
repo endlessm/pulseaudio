@@ -605,25 +605,6 @@ static pa_hook_result_t source_output_unlink_hook_callback(pa_core *c, pa_source
     return PA_HOOK_OK;
 }
 
-static bool profile_contains_available_ports(pa_card_profile *profile) {
-    pa_card *card;
-    pa_device_port *port;
-    void *state;
-
-    pa_assert(profile);
-
-    card = profile->card;
-    pa_assert(card);
-
-    PA_HASHMAP_FOREACH(port, card->ports, state) {
-	if (pa_hashmap_get(port->profiles, profile->name)
-	    && port->available == PA_AVAILABLE_YES)
-	    return true;
-    }
-
-    return false;
-}
-
 static pa_card_profile *find_best_profile_with_available_ports(pa_card *card) {
     pa_card_profile *profile = NULL;
     pa_card_profile *best_profile = NULL;
@@ -635,7 +616,7 @@ static pa_card_profile *find_best_profile_with_available_ports(pa_card *card) {
 	if (profile->available == PA_AVAILABLE_NO)
 	    continue;
 
-       if (!profile_contains_available_ports(profile))
+       if (!pa_card_profile_contains_available_ports(profile))
 	    continue;
 
 	if (!best_profile || profile->priority > best_profile->priority)
@@ -650,7 +631,7 @@ static void swith_to_alternative_profile_if_needed(pa_card *card) {
 
     pa_assert(card);
 
-    if (profile_contains_available_ports(card->active_profile))
+    if (pa_card_profile_contains_available_ports(card->active_profile))
         return;
 
     /* Try to avoid situations where we could settle on a profile when
