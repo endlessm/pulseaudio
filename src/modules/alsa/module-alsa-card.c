@@ -605,7 +605,7 @@ static pa_hook_result_t source_output_unlink_hook_callback(pa_core *c, pa_source
     return PA_HOOK_OK;
 }
 
-static pa_card_profile *find_best_profile_with_available_ports(pa_card *card) {
+static pa_card_profile *find_best_profile_with_available_ports(pa_card *card, pa_direction_t direction) {
     pa_card_profile *profile = NULL;
     pa_card_profile *best_profile = NULL;
     void *state;
@@ -613,14 +613,14 @@ static pa_card_profile *find_best_profile_with_available_ports(pa_card *card) {
     pa_assert(card);
 
     PA_HASHMAP_FOREACH(profile, card->profiles, state) {
-	if (profile->available == PA_AVAILABLE_NO)
-	    continue;
+        if (profile->available == PA_AVAILABLE_NO)
+            continue;
 
-       if (!pa_card_profile_contains_available_ports(profile))
-	    continue;
+        if (!pa_card_profile_contains_available_ports(profile, direction))
+            continue;
 
-	if (!best_profile || profile->priority > best_profile->priority)
-	    best_profile = profile;
+        if (!best_profile || profile->priority > best_profile->priority)
+            best_profile = profile;
     }
 
     return best_profile;
@@ -631,12 +631,15 @@ static void swith_to_alternative_profile_if_needed(pa_card *card) {
 
     pa_assert(card);
 
-    if (pa_card_profile_contains_available_ports(card->active_profile))
+    /* We are only interested in output ports as those are the ones that will
+       define whether we want to switch or not to another profile, since we should
+       have a way to play audio right from the start, if there's port for that */
+    if (pa_card_profile_contains_available_ports(card->active_profile, PA_DIRECTION_OUTPUT))
         return;
 
     /* Try to avoid situations where we could settle on a profile when
-       there are not available ports that could be actually used. */
-    if (alt_profile = find_best_profile_with_available_ports(card))
+       there are not available output ports that could be actually used. */
+    if (alt_profile = find_best_profile_with_available_ports(card, PA_DIRECTION_OUTPUT))
         pa_card_set_profile(card, alt_profile, false);
 }
 
