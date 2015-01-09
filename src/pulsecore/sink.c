@@ -235,7 +235,7 @@ pa_sink* pa_sink_new(
     pa_device_init_intended_roles(data->proplist);
 
     if (!data->active_port) {
-        pa_device_port *p = pa_device_port_find_best(data->ports);
+        pa_device_port *p = pa_device_port_find_best(data->ports, PA_DIRECTION_OUTPUT);
         if (p)
             pa_sink_new_data_set_port(data, p->name);
     }
@@ -302,7 +302,7 @@ pa_sink* pa_sink_new(
     /* Hopefully the active port has already been assigned in the previous call
        to pa_device_port_find_best, but better safe than sorry */
     if (!s->active_port)
-        s->active_port = pa_device_port_find_best(s->ports);
+        s->active_port = pa_device_port_find_best(s->ports, PA_DIRECTION_OUTPUT);
 
     if (s->active_port)
         s->port_latency_offset = s->active_port->latency_offset;
