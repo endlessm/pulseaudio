@@ -7,6 +7,9 @@ include /usr/share/cdbs/1/rules/autoreconf.mk
 
 export AUTOPOINT=intltoolize --automake --copy
 
+# Remove the +devxx.abcdef suffix inserted by Jenkins after the version string
+export DEB_UPSTREAM_VERSION := $(shell echo $(DEB_UPSTREAM_VERSION) | cut -f 1 -d '+')
+
 #Don't build all the modules packages when bootstrapping
 ifeq ($(words $(sort $(filter stage1,$(DEB_BUILD_PROFILES)))),1)
   $(warning Bootstrap profile build)
