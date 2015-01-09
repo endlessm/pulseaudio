@@ -61,8 +61,6 @@ static void card_info_free(struct card_info *info) {
 
 static bool profile_good_for_output(pa_card_profile *profile, pa_device_port *port) {
     pa_card *card;
-    pa_sink *sink;
-    uint32_t idx;
 
     pa_assert(profile);
 
@@ -79,14 +77,6 @@ static bool profile_good_for_output(pa_card_profile *profile, pa_device_port *po
 
     if (port == card->preferred_output_port)
         return true;
-
-    PA_IDXSET_FOREACH(sink, card->sinks, idx) {
-        if (!sink->active_port)
-            continue;
-
-        if ((sink->active_port->available != PA_AVAILABLE_NO) && (sink->active_port->priority >= port->priority))
-            return false;
-    }
 
     return true;
 }
@@ -333,7 +323,7 @@ static pa_device_port *new_sink_source(pa_hashmap *ports, const char *name) {
     if (p->available != PA_AVAILABLE_NO)
         return NULL;
 
-    pa_assert_se(p = pa_device_port_find_best(ports));
+    pa_assert_se(p = pa_device_port_find_best(ports, p->direction));
     return p;
 }
 
