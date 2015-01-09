@@ -190,6 +190,7 @@ static void resolver_cb(
 
         if (nicename) {
             args = pa_sprintf_malloc("server=[%s]:%u "
+                                     "channels=2 "
                                      "sink_name=%s "
                                      "sink_properties='device.description=\"%s\"'",
                                      avahi_address_snprint(at, sizeof(at), a), port,
@@ -198,6 +199,7 @@ static void resolver_cb(
             pa_xfree(nicename);
         } else {
             args = pa_sprintf_malloc("server=[%s]:%u "
+                                     "channels=2 "
                                      "sink_name=%s",
                                      avahi_address_snprint(at, sizeof(at), a), port,
                                      vname);
