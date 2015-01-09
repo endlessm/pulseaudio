@@ -36,11 +36,14 @@ struct userdata {
      pa_hook_slot *source_new_slot;
 };
 
-static pa_device_port* find_best_port(pa_hashmap *ports) {
+static pa_device_port* find_best_port(pa_hashmap *ports, pa_direction_t direction) {
     void *state;
     pa_device_port* port, *result = NULL;
 
     PA_HASHMAP_FOREACH(port, ports, state) {
+        if (direction != port->direction)
+            continue;
+
         if (result == NULL ||
             result->available == PA_AVAILABLE_NO ||
             (port->available != PA_AVAILABLE_NO && port->priority > result->priority)) {
@@ -52,9 +55,6 @@ static pa_device_port* find_best_port(pa_hashmap *ports) {
 }
 
 static bool profile_good_for_output(pa_card_profile *profile) {
-    pa_sink *sink;
-    uint32_t idx;
-
     pa_assert(profile);
 
     if (profile->card->active_profile->n_sources != profile->n_sources)
@@ -62,15 +62,6 @@ static bool profile_good_for_output(pa_card_profile *profile) {
 
     if (profile->card->active_profile->max_source_channels != profile->max_source_channels)
         return false;
-
-    /* Try not to switch to HDMI sinks from analog when HDMI is becoming available */
-    PA_IDXSET_FOREACH(sink, profile->card->sinks, idx) {
-        if (!sink->active_port)
-            continue;
-
-        if (sink->active_port->available != PA_AVAILABLE_NO)
-            return false;
-    }
 
     return true;
 }
@@ -207,24 +198,39 @@ static pa_hook_result_t port_available_hook_callback(pa_core *c, pa_device_port 
     }
 
     if (port->available == PA_AVAILABLE_NO) {
-        if (sink) {
-            pa_device_port *p2 = find_best_port(sink->ports);
+        pa_device_port *p2 = NULL;
+        bool need_to_set_port = false;
 
-            if (p2 && p2->available != PA_AVAILABLE_NO)
-                pa_sink_set_port(sink, p2->name, false);
-            else {
-                /* Maybe try to switch to another profile? */
+        /* Either sink or source will have a non-NULL value, but not both */
+        if (sink)
+            p2 = find_best_port(sink->ports, port->direction);
+        if (source)
+            p2 = find_best_port(source->ports, port->direction);
+
+        if (p2 && p2 != port && p2->available != PA_AVAILABLE_NO) {
+            need_to_set_port = true;
+        } else {
+            /* Could not find a suitable port in the same sink, so
+               look for other ports with the same direction in the card */
+            p2 = find_best_port(card->ports, port->direction);
+
+            if (p2 && p2 != port && p2->available != PA_AVAILABLE_NO) {
+                if (try_to_switch_profile(p2) < 0)
+                    return PA_HOOK_OK;
+
+                pa_assert(card->active_profile == pa_hashmap_get(p2->profiles, card->active_profile->name));
+
+                /* Now that profile has changed, our sink and source pointers must be updated */
+                find_sink_and_source(card, p2, &sink, &source);
+                need_to_set_port = true;
             }
         }
 
-        if (source) {
-            pa_device_port *p2 = find_best_port(source->ports);
-
-            if (p2 && p2->available != PA_AVAILABLE_NO)
+        if (need_to_set_port) {
+            if (sink)
+                pa_sink_set_port(sink, p2->name, false);
+            if (source)
                 pa_source_set_port(source, p2->name, false);
-            else {
-                /* Maybe try to switch to another profile? */
-            }
         }
     }
 
@@ -264,7 +270,7 @@ static pa_device_port *new_sink_source(pa_hashmap *ports, const char *name) {
     if (p->available != PA_AVAILABLE_NO)
         return NULL;
 
-    pa_assert_se(p = find_best_port(ports));
+    pa_assert_se(p = find_best_port(ports, p->direction));
     return p;
 }
 
