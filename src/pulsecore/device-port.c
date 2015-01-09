@@ -175,7 +175,7 @@ void pa_device_port_set_latency_offset(pa_device_port *p, int64_t offset) {
     pa_hook_fire(&core->hooks[PA_CORE_HOOK_PORT_LATENCY_OFFSET_CHANGED], p);
 }
 
-pa_device_port *pa_device_port_find_best(pa_hashmap *ports)
+pa_device_port *pa_device_port_find_best(pa_hashmap *ports, pa_direction_t direction)
 {
     void *state;
     pa_device_port *p, *best = NULL;
@@ -185,6 +185,9 @@ pa_device_port *pa_device_port_find_best(pa_hashmap *ports)
 
     /* First run: skip unavailable ports */
     PA_HASHMAP_FOREACH(p, ports, state) {
+        if (direction != p->direction)
+            continue;
+
         if (p->available == PA_AVAILABLE_NO)
             continue;
 

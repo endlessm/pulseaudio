@@ -130,7 +130,7 @@ static pa_sink* find_evacuation_sink(pa_core *c, pa_sink_input *i, pa_sink *skip
         build_group_ports(all_ports, target->ports);
     }
 
-    best_port = pa_device_port_find_best(all_ports);
+    best_port = pa_device_port_find_best(all_ports, PA_DIRECTION_OUTPUT);
 
     pa_hashmap_free(all_ports);
 
@@ -241,7 +241,7 @@ static pa_source* find_evacuation_source(pa_core *c, pa_source_output *o, pa_sou
         build_group_ports(all_ports, target->ports);
     }
 
-    best_port = pa_device_port_find_best(all_ports);
+    best_port = pa_device_port_find_best(all_ports, PA_DIRECTION_INPUT);
 
     pa_hashmap_free(all_ports);
 
