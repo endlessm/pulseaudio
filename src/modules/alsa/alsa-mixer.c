@@ -4618,6 +4618,20 @@ void pa_alsa_profile_set_drop_unsupported(pa_alsa_profile_set *ps) {
     }
 }
 
+static pa_dynarray *jacks_array_from_path(pa_alsa_path *path)
+{
+    pa_dynarray *jacks;
+    pa_alsa_jack *jack;
+
+    pa_assert(path);
+
+    jacks = pa_dynarray_new(NULL);
+    PA_LLIST_FOREACH(jack, path->jacks)
+        pa_dynarray_append(jacks, jack);
+
+    return jacks;
+}
+
 static pa_device_port* device_port_alsa_init(pa_hashmap *ports, /* card ports */
     const char* name,
     const char* description,
@@ -4636,11 +4650,18 @@ static pa_device_port* device_port_alsa_init(pa_hashmap *ports, /* card ports */
     if (!p) {
         pa_alsa_port_data *data;
         pa_device_port_new_data port_data;
+        pa_available_t pa;
+        pa_dynarray *jacks_array;
 
         pa_device_port_new_data_init(&port_data);
         pa_device_port_new_data_set_name(&port_data, name);
         pa_device_port_new_data_set_description(&port_data, description);
         pa_device_port_new_data_set_direction(&port_data, path->direction == PA_ALSA_DIRECTION_OUTPUT ? PA_DIRECTION_OUTPUT : PA_DIRECTION_INPUT);
+
+        jacks_array = jacks_array_from_path(path);
+        pa = pa_alsa_availability_from_jacks(jacks_array, NULL, NULL);
+        pa_dynarray_free(jacks_array);
+        pa_device_port_new_data_set_available(&port_data, pa);
 
         p = pa_device_port_new(core, &port_data, sizeof(pa_alsa_port_data));
         pa_device_port_new_data_done(&port_data);

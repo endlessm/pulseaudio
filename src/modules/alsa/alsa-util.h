@@ -151,4 +151,6 @@ struct pa_hdmi_eld {
 
 int pa_alsa_get_hdmi_eld(snd_hctl_elem_t *elem, pa_hdmi_eld *eld);
 
+pa_available_t pa_alsa_availability_from_jacks(pa_dynarray *jacks, pa_device_port *port, pa_card *card);
+
 #endif

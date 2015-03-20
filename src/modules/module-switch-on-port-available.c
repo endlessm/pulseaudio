@@ -240,6 +240,58 @@ static pa_device_port *new_sink_source(pa_hashmap *ports, const char *name) {
     return p;
 }
 
+static bool profile_contains_available_ports(char *profile_name, pa_hashmap *ports) {
+    pa_device_port *port;
+    void *state;
+
+    pa_assert(profile_name);
+
+    PA_HASHMAP_FOREACH(port, ports, state) {
+        if (pa_hashmap_get(port->profiles, profile_name)
+            && port->available != PA_AVAILABLE_NO)
+            return true;
+    }
+
+    return false;
+}
+
+static pa_card_profile *find_best_profile_with_available_ports(pa_card_new_data *data) {
+    pa_card_profile *profile = NULL;
+    pa_card_profile *best_profile = NULL;
+    void *state;
+
+    pa_assert(data);
+
+    PA_HASHMAP_FOREACH(profile, data->profiles, state) {
+        if (profile->available == PA_AVAILABLE_NO)
+            continue;
+
+        if (!profile_contains_available_ports(profile->name, data->ports))
+            continue;
+
+        if (!best_profile || profile->priority > best_profile->priority)
+            best_profile = profile;
+    }
+
+    return best_profile;
+}
+
+static pa_hook_result_t card_new_hook_callback(pa_core *c, pa_card_new_data *data, void *u) {
+    pa_card_profile *alt_profile;
+
+    if (data->active_profile && profile_contains_available_ports(data->active_profile, data->ports))
+        return PA_HOOK_OK;
+
+    /* Try to avoid situations where we could settle on a profile when
+       there are not available ports that could be actually used. */
+    if (alt_profile = find_best_profile_with_available_ports(data)) {
+        pa_card_new_data_set_profile(data, alt_profile->name);
+        data->save_profile = false;
+    }
+
+    return PA_HOOK_OK;
+}
+
 static pa_hook_result_t sink_new_hook_callback(pa_core *c, pa_sink_new_data *new_data, void *u) {
 
     pa_device_port *p = new_sink_source(new_data->ports, new_data->active_port);
@@ -266,6 +318,8 @@ int pa__init(pa_module*m) {
     pa_assert(m);
 
     /* Make sure we are after module-device-restore, so we can overwrite that suggestion if necessary */
+    pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_CARD_NEW],
+                           PA_HOOK_NORMAL, (pa_hook_cb_t) card_new_hook_callback, NULL);
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SINK_NEW],
                            PA_HOOK_NORMAL, (pa_hook_cb_t) sink_new_hook_callback, NULL);
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SOURCE_NEW],

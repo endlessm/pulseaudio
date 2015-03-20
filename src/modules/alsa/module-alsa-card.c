@@ -304,52 +304,19 @@ static void init_profile(struct userdata *u) {
             am->source = pa_alsa_source_new(u->module, u->modargs, __FILE__, u->card, am);
 }
 
-static void report_port_state(pa_device_port *p, struct userdata *u) {
-    void *state;
+static pa_dynarray *jacks_array_from_userdata(struct userdata *u)
+{
+    pa_dynarray *jacks;
     pa_alsa_jack *jack;
-    pa_available_t pa = PA_AVAILABLE_UNKNOWN;
-    pa_device_port *port;
+    void *state;
 
-    PA_HASHMAP_FOREACH(jack, u->jacks, state) {
-        pa_available_t cpa;
+    pa_assert(u);
 
-        if (u->use_ucm)
-            port = pa_hashmap_get(u->card->ports, jack->name);
-        else {
-            if (jack->path)
-                port = jack->path->port;
-            else
-                continue;
-        }
+    jacks = pa_dynarray_new(NULL);
+    PA_HASHMAP_FOREACH(jack, u->jacks, state)
+        pa_dynarray_append(jacks, jack);
 
-        if (p != port)
-            continue;
-
-        cpa = jack->plugged_in ? jack->state_plugged : jack->state_unplugged;
-
-        if (cpa == PA_AVAILABLE_NO) {
-          /* If a plugged-in jack causes the availability to go to NO, it
-           * should override all other availability information (like a
-           * blacklist) so set and bail */
-          if (jack->plugged_in) {
-            pa = cpa;
-            break;
-          }
-
-          /* If the current availablility is unknown go the more precise no,
-           * but otherwise don't change state */
-          if (pa == PA_AVAILABLE_UNKNOWN)
-            pa = cpa;
-        } else if (cpa == PA_AVAILABLE_YES) {
-          /* Output is available through at least one jack, so go to that
-           * level of availability. We still need to continue iterating through
-           * the jacks in case a jack is plugged in that forces the state to no
-           */
-          pa = cpa;
-        }
-    }
-
-    pa_device_port_set_available(p, pa);
+    return jacks;
 }
 
 static int report_jack_state(snd_mixer_elem_t *melem, unsigned int mask) {
@@ -382,13 +349,18 @@ static int report_jack_state(snd_mixer_elem_t *melem, unsigned int mask) {
             if (u->use_ucm) {
                 pa_assert(u->card->ports);
                 port = pa_hashmap_get(u->card->ports, jack->name);
-                pa_assert(port);
             }
             else {
                 pa_assert(jack->path);
-                pa_assert_se(port = jack->path->port);
+                port = jack->path->port;
             }
-            report_port_state(port, u);
+            if (port) {
+                pa_card *card = u->use_ucm ? u->card : NULL;
+                pa_dynarray *jacks_array = jacks_array_from_userdata(u);
+                pa_available_t pa = pa_alsa_availability_from_jacks(jacks_array, port, card);
+                pa_dynarray_free(jacks_array);
+                pa_device_port_set_available(port, pa);
+            }
         }
     return 0;
 }
@@ -732,6 +704,8 @@ int pa__init(pa_module *m) {
         if ((description = pa_proplist_gets(data.proplist, PA_PROP_DEVICE_DESCRIPTION)))
             pa_reserve_wrapper_set_application_device_name(reserve, description);
 
+    init_jacks(u);
+
     add_profiles(u, data.profiles, data.ports);
 
     if (pa_hashmap_isempty(data.profiles)) {
@@ -760,7 +734,6 @@ int pa__init(pa_module *m) {
     u->card->userdata = u;
     u->card->set_profile = card_set_profile;
 
-    init_jacks(u);
     init_profile(u);
     init_eld_ctls(u);
 
