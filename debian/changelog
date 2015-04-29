@@ -1,3 +1,215 @@
+pulseaudio (1:6.0) eos; urgency=low
+
+  * debian/rules:
+    + Disable bluez4 plugin, since we don't ship it, and force-enable
+      bluez5 integration.
+  * debian/changelog:
+    + Add back the epoch, since we're based on the Ubuntu package that has
+      it. This allows for smoother apt updates.
+  * Downstream patches still ported from our 5.0 release:
+    + "Exit PA with X session closing when PA is started by the session"
+    + "Fix switching between HDMI and headphones automatically"
+    + "module-alsa-card: Switch profiles if needed after initializing the card"
+    + "card: Extract profile_contains_available_ports() from module_alsa_card to card"
+    + "module-switch-on-port-available: Consider current profile before switching to a new one"
+    + "card: Consider direction when checking whether a card profile has ports available"
+    + "build: try to fix build on Jenkins"
+
+  [endlessm/shell#4595]
+
+ -- Mario Sanchez Prada <mario@endlessm.com>  Wed, 29 Apr 2015 18:14:35 +0100
+
+pulseaudio (6.0-1) experimental; urgency=medium
+
+  [ Luke Yelavich ]
+  * New upstream release
+  * Remove pulseaudio-kde autostart file on upgrade (Closes: #776331)
+
+  [ Felipe Sateler ]
+  * Upload to experimental
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 13 Mar 2015 22:45:13 -0300
+
+pulseaudio (5.99.2-2) experimental; urgency=medium
+
+  * Let configure guess if systemd is available. Closes: #773879
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 24 Dec 2014 18:42:30 -0300
+
+pulseaudio (5.99.2-1) experimental; urgency=medium
+
+  * New upstream release candidate
+  * Remove all patches: applied upstream
+  * Build-Depend on newer libsystemd-dev instead of the older -login and
+    -journal variants
+  * Reenable socket activation, as it no longer disables autospawn
+
+ -- Felipe Sateler <fsateler@debian.org>  Tue, 23 Dec 2014 21:28:08 -0300
+
+pulseaudio (5.99.1-3) experimental; urgency=medium
+
+  * Do not fail if udevadm commands fail in postinst. They are provided for
+    convenience only, and will fail when udev is not running
+    (eg, in a chroot or container). Closes: #772212
+  * Simplify bug script: use a single pactl list call
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 10 Dec 2014 23:34:41 -0300
+
+pulseaudio (5.99.1-2) experimental; urgency=medium
+
+  * Add patch to disable srbchannel tests when eventfd is not available
+  * Bump standards version (no changes)
+  * Exclude libpulsecommon from dh_makeshlibs
+  * Bash completion script has moved, add mv_conffile snippet
+
+ -- Felipe Sateler <fsateler@debian.org>  Thu, 04 Dec 2014 00:54:12 -0300
+
+pulseaudio (5.99.1-1) experimental; urgency=medium
+
+  [ Luke Yelavich ]
+  * New upstream release candidate
+    + Closes: #653320, #758272, #657983
+  * Dropped patches, either applied upstream or are now obsolete:
+    - 0001-raop-Don-t-use-incompatible-default-sample-spec-para.patch
+    - 0002-Use-the-fixed-point-speex-resampler-on-ARM.patch
+    - 0003-exit-with-X-session.patch
+    - 0004-dont-start-when-already-running.patch
+    - broken-PA_FLOAT32_SWAP.patch
+    - endianmacros-Fix-PA_MAYBE_INT16_SWAP-macro.patch
+    - kfreebsd_no_lock_and_threads_synchro.patch
+    - misc-cleanups-and-bug-fixes.patch
+    - mix-Fix-mixing-of-S24-samples-stored-as-S32RE.patch
+    - only-autostart-kde-version.patch
+    - rtp-recv-fix-crash-on-empty-UDP-packets-CVE-2014-397.patch
+    - tests-Cleanup-mix-test.patch
+    - tests-Fix-mix-test-on-big-endian-systems.patch
+    - util-Fix-pa_get_binary_name-on-Debian-kFreeBSD.patch
+    - util-Try-finding-out-application-name-using-dladdr.patch
+    - zsh-completion-Fix-completion-for-default-sink-sourc.patch
+  * Refreshed debian/patches/gnu-kfreebsd.patch
+  * Remove all references to start-pulseaudio-kde, it was dropped upstream
+  * Pulse now ships zsh completions, so drop install code, and adjust
+    pulseaudio.install to match
+  * Update shlibs
+  * Update symbols
+  * Disable systemd socket activation for now
+
+  [ Felipe Sateler ]
+  * Install zsh to vendor-completions, site-functions is for the admin
+  * Remove libpulsecommon from symbols file
+  * Trigger a udev reload after install
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 03 Dec 2014 10:14:17 -0300
+
+pulseaudio (5.0-13) unstable; urgency=medium
+
+  * Replace raop channels patch with proper fix from upstream.
+  * Release to unstable.
+
+ -- Felipe Sateler <fsateler@debian.org>  Sat, 11 Oct 2014 01:24:59 -0300
+
+pulseaudio (5.0-12) experimental; urgency=medium
+
+  * Import patch from upstream fixing float endianness swap.
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 03 Sep 2014 15:38:47 -0400
+
+pulseaudio (5.0-11) experimental; urgency=medium
+
+  * Fix crash when main cannot be found in patch
+    util-Try-finding-out-application-name-using-dladdr
+    Closes: #758556, 758531
+
+ -- Felipe Sateler <fsateler@debian.org>  Tue, 26 Aug 2014 00:27:39 -0400
+
+pulseaudio (5.0-10) experimental; urgency=medium
+
+  * patch: try finding out binary name using dladdr
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 17 Aug 2014 13:40:57 -0400
+
+pulseaudio (5.0-9) experimental; urgency=medium
+
+  * More patches from upstream for kFreeBSD
+
+ -- Felipe Sateler <fsateler@debian.org>  Sat, 16 Aug 2014 13:01:43 -0400
+
+pulseaudio (5.0-8) experimental; urgency=medium
+
+  * Pick some patches from upstream fixing tests
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 13 Aug 2014 23:59:16 -0400
+
+pulseaudio (5.0-7) experimental; urgency=medium
+
+  * Re-enable testsuite
+    - Disable test suite timeouts
+    - Apply patches from upstream to fix failures
+
+ -- Felipe Sateler <fsateler@debian.org>  Tue, 05 Aug 2014 10:31:51 -0400
+
+pulseaudio (5.0-6) unstable; urgency=medium
+
+  * Fix gnu-kfreebsd.patch typo (missing !)
+
+ -- Felipe Sateler <fsateler@debian.org>  Mon, 04 Aug 2014 20:02:15 -0400
+
+pulseaudio (5.0-5) unstable; urgency=medium
+
+  * Fix #defines for Debian GNU/kFreeBSD. Closes: #756914
+  * debian/patches/kfreebsd_no_lock_and_threads_synchro.patch: mark as applied
+    upstream
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 03 Aug 2014 17:50:59 -0400
+
+pulseaudio (5.0-4) unstable; urgency=medium
+
+  * Revert enabling of testsuite.
+    - Fails on multiple architectures, so disable while we work things out
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 30 Jul 2014 10:08:18 -0400
+
+pulseaudio (5.0-3) unstable; urgency=medium
+
+  [ Felipe Sateler ]
+  * Drop workaround for ARM < v6, upstream now conditionally compiles it.
+  * Drop special patches rule, not used anymore
+  * debian/patches/0003-exit-with-X-session.patch
+    - Kill pulseaudio on session exit with kde too
+    - Add DEP-3 header, forwarded
+  * Enable testsuite
+  * Bump debhelper compat level to 9
+    - debug symbols are now stored by build-id instead of by path
+    - Exclude private libpulsecommon-5.0.so from dh_makeshlibs
+  * Change init script dependency from avahi to avahi-daemon. Closes: #731609
+    - Requires adding a Breaks on avahi-daemon << 0.6.31-3
+  * Bump standards-version (No changes needed)
+  * Add lintian override for pulseaudio package
+    - bash completion is not meant to be executable
+    - neither are the pulseaudio configuration files
+  * Do not start pulseaudio in X session if it was already started.
+     Closes: #743813
+  * Remove pulseaudio init script, place it under examples.
+     Closes: #696842
+  * debian/patches/only-autostart-kde-version.patch:
+     - Do not autostart pulseaudio twice under KDE, it sometimes leads
+       to slow system startup. Closes: #705426
+  * debian/patches/rtp-recv-fix-crash-on-empty-UDP-packets-CVE-2014-397.patch
+     - New patch from upstream, fixes crash on empty UDP packets.
+       Fixes CVE-2014-3970
+  * zsh-completion: Fix completion for default sink/source
+  * Add bugscript to the pulseaudio package. Closes: #739294
+  * Make pulseaudio Depend on pulseaudio-utils
+    - start-pulseaudio{kde,x11} needs it. Closes: #648973
+    - The bugscript needs it too.
+  * Use dh_lintian instead of manually installing overrides
+
+  [ Jelmer Vernooij ]
+  * Disable building against tdb on the hurd, where it is not available.
+     Closes: #749333
+
+ -- Felipe Sateler <fsateler@debian.org>  Sat, 26 Jul 2014 01:02:03 -0400
+
 pulseaudio (1:5.0-2endless7) eos; urgency=low
 
   * debian/patches/endless-Consider-direction-when-checking-whether-a-card-prof.patch:

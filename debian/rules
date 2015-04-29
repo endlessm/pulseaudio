@@ -10,6 +10,10 @@ export AUTOPOINT=intltoolize --automake --copy
 # Remove the +devxx.abcdef suffix inserted by Jenkins after the version string
 export DEB_UPSTREAM_VERSION := $(shell echo $(DEB_UPSTREAM_VERSION) | cut -f 1 -d '+')
 
+# Needed for testsuite
+export XDG_RUNTIME_DIR = $(CURDIR)/debian/tmp/tmp/xdgruntimedir
+export CK_TIMEOUT_MULTIPLIER = 0
+
 #Don't build all the modules packages when bootstrapping
 ifeq ($(words $(sort $(filter stage1,$(DEB_BUILD_PROFILES)))),1)
   $(warning Bootstrap profile build)
@@ -27,8 +31,6 @@ common-build-arch::
 
 common-install-arch::
 	find $(DEB_DESTDIR) -name "*.la" -delete
-	mkdir -p $(CURDIR)/debian/tmp/usr/share/lintian
-	cp -a $(CURDIR)/debian/overrides $(CURDIR)/debian/tmp/usr/share/lintian
 	mkdir -p $(CURDIR)/debian/tmp/usr/share/alsa/alsa.conf.d
 	cp -a $(CURDIR)/debian/pulse.conf \
 		$(CURDIR)/debian/tmp/usr/share/alsa/alsa.conf.d
@@ -37,18 +39,6 @@ common-install-arch::
 	install -d $(CURDIR)/debian/tmp/usr/share/apport/package-hooks
 	cp $(CURDIR)/debian/apport-hook.py $(CURDIR)/debian/tmp/usr/share/apport/package-hooks/source_pulseaudio.py
 
-install/pulseaudio::
-	mkdir -p $(CURDIR)/debian/tmp/usr/share/zsh/vendor-completions/
-	install -m 644 shell-completion/pulseaudio-zsh-completion.zsh \
-		$(CURDIR)/debian/tmp/usr/share/zsh/vendor-completions/_pulseaudio
-
-SVOLUME_ARM = pulsecore/libpulsecommon_$(DEB_UPSTREAM_VERSION)_la-svolume_arm.lo
-common-configure-arch::
-	make -qn -C src $(SVOLUME_ARM) || [ $$? != 2 ]
-ifneq (,$(findstring $(DEB_HOST_ARCH), "arm armel"))
-	make -C src $(SVOLUME_ARM) CFLAGS+=-march=armv6
-endif
-
 common-binary-post-install-arch:: list-missing
 
 clean::
@@ -56,34 +46,26 @@ clean::
 	rm -f debian/pulseaudio.install.kfreebsd-amd64
 	rm -f debian/pulseaudio.install.hurd-i386
 
-update-patch-series:
-	mkdir -p $(CURDIR)/debian/patches
-	rm -f $(CURDIR)/debian/patches/*.patch
-	git format-patch -o $(CURDIR)/debian/patches patches ^upstream | \
-		xargs -n 1 basename > $(CURDIR)/debian/patches/series
-	for patch in $$(ls $(CURDIR)/debian/patches/*.patch) ; \
-	do \
-		lines=$$(cat $$patch | wc -l) ; \
-		head -n $$(($$lines - 3)) $$patch > $${patch}.chomped ; \
-		mv $${patch}.chomped $$patch ; \
-	done
-
 # Libs should be in the multi-arch path, but the modules should be in the
 # normal directory as pulseaudio is foreign
-DEB_CONFIGURE_EXTRA_FLAGS = \
-  --enable-x11 \
+DEB_CONFIGURE_EXTRA_FLAGS = --enable-x11 \
   --enable-bluez5 \
   --disable-bluez4 \
   --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
-  --with-module-dir=\$${prefix}/lib/pulse-$(DEB_UPSTREAM_VERSION)/modules
+  --with-module-dir=\$${prefix}/lib/pulse-$(DEB_UPSTREAM_VERSION)/modules \
+  --with-zsh-completion-dir=\$${datadir}/zsh/vendor-completions \
+
 
 ifeq ($(words $(sort $(filter stage1,$(DEB_BUILD_PROFILES)))),1)
   DEB_CONFIGURE_EXTRA_FLAGS += --disable-bluez
 endif
 
 
-DEB_DH_MAKESHLIBS_ARGS_ALL = --exclude=usr/lib/pulse-$(DEB_UPSTREAM_VERSION)/modules
+DEB_DH_MAKESHLIBS_ARGS_ALL = --exclude=usr/lib/pulse-$(DEB_UPSTREAM_VERSION)/modules \
+			     --exclude=usr/lib/$(DEB_HOST_MULTIARCH)/pulseaudio
 
 LDFLAGS += -Wl,--no-as-needed
 
 DEB_DH_INSTALL_ARGS = --sourcedir=$(CURDIR)/debian/tmp
+
+DEB_MAKE_CHECK_TARGET = check VERBOSE=1

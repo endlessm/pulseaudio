@@ -3,10 +3,8 @@ etc/pulse/system.pa
 etc/pulse/daemon.conf
 etc/dbus-1/system.d/pulseaudio-system.conf
 etc/xdg/autostart/pulseaudio.desktop
-etc/xdg/autostart/pulseaudio-kde.desktop
 usr/bin/pulseaudio
 usr/bin/start-pulseaudio-x11
-usr/bin/start-pulseaudio-kde
 usr/lib/pulse-*/modules/libalsa-util.so
 usr/lib/pulse-*/modules/libcli.so
 usr/lib/pulse-*/modules/libprotocol-cli.so
@@ -42,7 +40,6 @@ usr/lib/pulse-*/modules/module-native-protocol-unix.so
 usr/lib/pulse-*/modules/module-udev-detect.so
 usr/lib/pulse-*/modules/module-loopback.so
 usr/share/apport
-usr/share/lintian/overrides/pulseaudio
 usr/lib/pulse-*/modules/module-null-sink.so
 usr/lib/pulse-*/modules/module-oss.so
 usr/lib/pulse-*/modules/liboss-util.so
@@ -84,5 +81,5 @@ usr/share/locale
 usr/share/pulseaudio
 usr/lib/*/libpulsecore-*.so usr/lib
 usr/share/alsa
-usr/share/zsh/vendor-completions/*
+usr/share/zsh
 etc/bash_completion.d/*
