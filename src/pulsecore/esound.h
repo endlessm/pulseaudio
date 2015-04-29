@@ -17,9 +17,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 /* Most of the following is blatantly stolen from esound. */
@@ -33,7 +31,7 @@
 /* maximum size we can write().  Otherwise we might overflow */
 #define ESD_MAX_WRITE_SIZE (21 * 4096)
 
-/* length of the authorization key, octets */
+/* length of the authentication key, octets */
 #define ESD_KEY_LEN (16)
 
 /* default port for the EsounD server */

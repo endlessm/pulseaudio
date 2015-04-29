@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -139,7 +137,7 @@ static const pa_daemon_conf default_conf = {
    ,.rlimit_rtprio = { .value = 9, .is_set = true }    /* One below JACK's default for the server */
 #endif
 #ifdef RLIMIT_RTTIME
-   ,.rlimit_rttime = { .value = PA_USEC_PER_SEC, .is_set = true }
+   ,.rlimit_rttime = { .value = 200*PA_USEC_PER_MSEC, .is_set = true } /* rtkit's limit is 200 ms */
 #endif
 #endif
 };
@@ -345,8 +343,7 @@ static int parse_sample_rate(pa_config_parser_state *state) {
 
     c = state->data;
 
-    if (pa_atou(state->rvalue, &r) < 0 || !pa_sample_rate_valid(r) ||
-        !((r % 4000 == 0) || (r % 11025 == 0))) {
+    if (pa_atou(state->rvalue, &r) < 0 || !pa_sample_rate_valid(r)) {
         pa_log(_("[%s:%u] Invalid sample rate '%s'."), state->filename, state->lineno, state->rvalue);
         return -1;
     }
@@ -363,8 +360,7 @@ static int parse_alternate_sample_rate(pa_config_parser_state *state) {
 
     c = state->data;
 
-    if (pa_atou(state->rvalue, &r) < 0 || !pa_sample_rate_valid(r) ||
-        !((r % 4000==0) || (r % 11025 == 0))) {
+    if (pa_atou(state->rvalue, &r) < 0 || !pa_sample_rate_valid(r)) {
         pa_log(_("[%s:%u] Invalid sample rate '%s'."), state->filename, state->lineno, state->rvalue);
         return -1;
     }

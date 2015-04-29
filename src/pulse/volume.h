@@ -18,9 +18,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <inttypes.h>
@@ -216,7 +214,7 @@ char *pa_volume_snprint(char *s, size_t l, pa_volume_t v);
  * any release without warning and without being considered API or ABI
  * breakage. You should not use this definition anywhere where it
  * might become part of an ABI. \since 0.9.15 */
-#define PA_SW_VOLUME_SNPRINT_DB_MAX 10
+#define PA_SW_VOLUME_SNPRINT_DB_MAX 11
 
 /** Pretty print a volume but show dB values. \since 0.9.15 */
 char *pa_sw_volume_snprint_dB(char *s, size_t l, pa_volume_t v);

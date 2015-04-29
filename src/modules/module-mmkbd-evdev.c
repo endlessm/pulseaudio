@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -256,8 +254,11 @@ void pa__done(pa_module*m) {
     if (u->io)
         m->core->mainloop->io_free(u->io);
 
-    if (u->fd >= 0)
-        pa_assert_se(pa_close(u->fd) == 0);
+    if (u->fd >= 0) {
+        int r = pa_close(u->fd);
+        if (r < 0) /* https://bugs.freedesktop.org/show_bug.cgi?id=80867 */
+            pa_log("Closing fd failed: %s", pa_cstrerror(errno));
+    }
 
     pa_xfree(u->sink_name);
     pa_xfree(u);

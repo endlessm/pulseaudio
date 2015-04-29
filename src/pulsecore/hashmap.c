@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -205,6 +203,19 @@ void* pa_hashmap_remove(pa_hashmap *h, const void *key) {
     remove_entry(h, e);
 
     return data;
+}
+
+int pa_hashmap_remove_and_free(pa_hashmap *h, const void *key) {
+    void *data;
+
+    pa_assert(h);
+
+    data = pa_hashmap_remove(h, key);
+
+    if (data && h->value_free_func)
+        h->value_free_func(data);
+
+    return data ? 0 : -1;
 }
 
 void pa_hashmap_remove_all(pa_hashmap *h) {

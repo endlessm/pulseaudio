@@ -18,9 +18,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifndef PACKAGE
@@ -57,8 +55,9 @@ ssize_t pa_iochannel_read(pa_iochannel*io, void*data, size_t l);
 bool pa_iochannel_creds_supported(pa_iochannel *io);
 int pa_iochannel_creds_enable(pa_iochannel *io);
 
+ssize_t pa_iochannel_write_with_fds(pa_iochannel*io, const void*data, size_t l, int nfd, const int *fds);
 ssize_t pa_iochannel_write_with_creds(pa_iochannel*io, const void*data, size_t l, const pa_creds *ucred);
-ssize_t pa_iochannel_read_with_creds(pa_iochannel*io, void*data, size_t l, pa_creds *ucred, bool *creds_valid);
+ssize_t pa_iochannel_read_with_ancil_data(pa_iochannel*io, void*data, size_t l, pa_cmsg_ancil_data *ancil_data);
 #endif
 
 bool pa_iochannel_is_readable(pa_iochannel*io);

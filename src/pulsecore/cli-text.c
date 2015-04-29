@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -536,7 +534,7 @@ char *pa_source_output_list_to_string(pa_core *c) {
             state_table[pa_source_output_get_state(o)],
             o->source->index, o->source->name,
             volume_str,
-            pa_yes_no(pa_source_output_get_mute(o)),
+            pa_yes_no(o->muted),
             (double) pa_source_output_get_latency(o, NULL) / PA_USEC_PER_MSEC,
             clt,
             pa_sample_spec_snprint(ss, sizeof(ss), &o->sample_spec),
@@ -634,7 +632,7 @@ char *pa_sink_input_list_to_string(pa_core *c) {
             state_table[pa_sink_input_get_state(i)],
             i->sink->index, i->sink->name,
             volume_str,
-            pa_yes_no(pa_sink_input_get_mute(i)),
+            pa_yes_no(i->muted),
             (double) pa_sink_input_get_latency(i, NULL) / PA_USEC_PER_MSEC,
             clt,
             pa_sample_spec_snprint(ss, sizeof(ss), &i->sample_spec),

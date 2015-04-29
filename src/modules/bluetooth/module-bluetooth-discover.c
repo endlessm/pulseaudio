@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -33,6 +31,9 @@ PA_MODULE_AUTHOR("João Paulo Rechi Vita");
 PA_MODULE_DESCRIPTION("Detect available Bluetooth daemon and load the corresponding discovery module");
 PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(true);
+PA_MODULE_USAGE(
+    "headset=ofono|native|auto (bluez 5 only)"
+);
 
 struct userdata {
     uint32_t bluez5_module_idx;
@@ -50,7 +51,7 @@ int pa__init(pa_module* m) {
     u->bluez4_module_idx = PA_INVALID_INDEX;
 
     if (pa_module_exists("module-bluez5-discover")) {
-        mm = pa_module_load(m->core, "module-bluez5-discover",  NULL);
+        mm = pa_module_load(m->core, "module-bluez5-discover", m->argument);
         if (mm)
             u->bluez5_module_idx = mm->index;
     }

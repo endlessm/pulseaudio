@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -237,5 +235,8 @@ void pa_memtrap_install(void) {
     sa.sa_flags = SA_RESTART|SA_SIGINFO;
 
     pa_assert_se(sigaction(SIGBUS, &sa, NULL) == 0);
+#ifdef __FreeBSD_kernel__
+    pa_assert_se(sigaction(SIGSEGV, &sa, NULL) == 0);
+#endif
 #endif
 }

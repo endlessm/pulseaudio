@@ -17,9 +17,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <sys/types.h>
@@ -29,8 +27,12 @@
 #endif
 
 #include <pulsecore/socket.h>
+#include <stdbool.h>
+
+#define MAX_ANCIL_DATA_FDS 2
 
 typedef struct pa_creds pa_creds;
+typedef struct pa_cmsg_ancil_data pa_cmsg_ancil_data;
 
 #if defined(SCM_CREDENTIALS)
 
@@ -39,6 +41,15 @@ typedef struct pa_creds pa_creds;
 struct pa_creds {
     gid_t gid;
     uid_t uid;
+};
+
+/* Struct for handling ancillary data, i e, extra data that can be sent together with a message
+ * over unix pipes. Supports sending and receiving credentials and file descriptors. */
+struct pa_cmsg_ancil_data {
+    pa_creds creds;
+    bool creds_valid;
+    int nfd;
+    int fds[MAX_ANCIL_DATA_FDS];
 };
 
 #else

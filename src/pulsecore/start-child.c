@@ -14,9 +14,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -92,7 +90,7 @@ int pa_start_child_for_read(const char *name, const char *argv1, pid_t *pid) {
 
         /* Make sure our children are not influenced by the
          * LD_BIND_NOW we set for ourselves. */
-        unsetenv("LD_BIND_NOW");
+        pa_unset_env("LD_BIND_NOW");
 
 #ifdef PR_SET_PDEATHSIG
         /* On Linux we can use PR_SET_PDEATHSIG to have the helper

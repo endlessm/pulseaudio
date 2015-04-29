@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -49,7 +47,7 @@ static const char introspection[] =
     DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE
     "<node>"
     " <!-- If you are looking for documentation make sure to check out\n"
-    "      http://pulseaudio.org/wiki/DBusInterface -->\n"
+    "      http://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/DBus/ -->\n"
     " <interface name=\"" INTERFACE "\">\n"
     "  <property name=\"Address\" type=\"s\" access=\"read\"/>\n"
     " </interface>\n"
@@ -115,7 +113,6 @@ finish:
 
 enum get_address_result_t {
     SUCCESS,
-    FAILED_TO_LOAD_CLIENT_CONF,
     SERVER_FROM_TYPE_FAILED
 };
 
@@ -126,10 +123,7 @@ static enum get_address_result_t get_address(pa_server_type_t server_type, char 
 
     *address = NULL;
 
-    if (pa_client_conf_load(conf, NULL) < 0) {
-        r = FAILED_TO_LOAD_CLIENT_CONF;
-        goto finish;
-    }
+    pa_client_conf_load(conf, false, false);
 
     if (conf->default_dbus_server)
         *address = pa_xstrdup(conf->default_dbus_server);
@@ -171,18 +165,6 @@ static DBusHandlerResult handle_get_address(DBusConnection *conn, DBusMessage *m
             }
             if (!dbus_message_iter_close_container(&msg_iter, &variant_iter)) {
                 r = DBUS_HANDLER_RESULT_NEED_MEMORY;
-                goto finish;
-            }
-            if (!dbus_connection_send(conn, reply, NULL)) {
-                r = DBUS_HANDLER_RESULT_NEED_MEMORY;
-                goto finish;
-            }
-            r = DBUS_HANDLER_RESULT_HANDLED;
-            goto finish;
-
-        case FAILED_TO_LOAD_CLIENT_CONF:
-            if (!(reply = dbus_message_new_error(msg, "org.pulseaudio.ClientConfLoadError", "Failed to load client.conf."))) {
-                r = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
                 goto finish;
             }
             if (!dbus_connection_send(conn, reply, NULL)) {
@@ -389,18 +371,6 @@ static DBusHandlerResult handle_get_all(DBusConnection *conn, DBusMessage *msg, 
             }
             if (!dbus_message_iter_close_container(&msg_iter, &dict_iter)) {
                 r = DBUS_HANDLER_RESULT_NEED_MEMORY;
-                goto finish;
-            }
-            if (!dbus_connection_send(conn, reply, NULL)) {
-                r = DBUS_HANDLER_RESULT_NEED_MEMORY;
-                goto finish;
-            }
-            r = DBUS_HANDLER_RESULT_HANDLED;
-            goto finish;
-
-        case FAILED_TO_LOAD_CLIENT_CONF:
-            if (!(reply = dbus_message_new_error(msg, "org.pulseaudio.ClientConfLoadError", "Failed to load client.conf."))) {
-                r = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
                 goto finish;
             }
             if (!dbus_connection_send(conn, reply, NULL)) {

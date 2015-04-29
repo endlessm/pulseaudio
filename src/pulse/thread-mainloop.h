@@ -18,9 +18,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <pulse/mainloop-api.h>
@@ -272,7 +270,7 @@ void pa_threaded_mainloop_stop(pa_threaded_mainloop *m);
  * are executed with this lock held. */
 void pa_threaded_mainloop_lock(pa_threaded_mainloop *m);
 
-/** Unlock the event loop object, inverse of pa_threaded_mainloop_lock() */
+/** Unlock the event loop object, inverse of pa_threaded_mainloop_lock(). */
 void pa_threaded_mainloop_unlock(pa_threaded_mainloop *m);
 
 /** Wait for an event to be signalled by the event loop thread. You
@@ -287,7 +285,7 @@ void pa_threaded_mainloop_unlock(pa_threaded_mainloop *m);
 void pa_threaded_mainloop_wait(pa_threaded_mainloop *m);
 
 /** Signal all threads waiting for a signalling event in
- * pa_threaded_mainloop_wait(). If wait_for_release is non-zero, do
+ * pa_threaded_mainloop_wait(). If wait_for_accept is non-zero, do
  * not return before the signal was accepted by a
  * pa_threaded_mainloop_accept() call. While waiting for that condition
  * the event loop object is unlocked. */

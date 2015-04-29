@@ -14,9 +14,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -100,11 +98,10 @@ pa_fdsem *pa_fdsem_open_shm(pa_fdsem_data *data, int event_fd) {
     return f;
 }
 
-pa_fdsem *pa_fdsem_new_shm(pa_fdsem_data *data, int* event_fd) {
+pa_fdsem *pa_fdsem_new_shm(pa_fdsem_data *data) {
     pa_fdsem *f = NULL;
 
     pa_assert(data);
-    pa_assert(event_fd);
 
 #ifdef HAVE_SYS_EVENTFD_H
 

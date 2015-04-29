@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -535,6 +533,12 @@ pa_channel_map *pa_channel_map_parse(pa_channel_map *rmap, const char *s) {
         map.channels = 2;
         map.map[0] = PA_CHANNEL_POSITION_LEFT;
         map.map[1] = PA_CHANNEL_POSITION_RIGHT;
+        goto finish;
+    } else if (pa_streq(s, "surround-21")) {
+        map.channels = 3;
+        map.map[0] = PA_CHANNEL_POSITION_FRONT_LEFT;
+        map.map[1] = PA_CHANNEL_POSITION_FRONT_RIGHT;
+        map.map[2] = PA_CHANNEL_POSITION_LFE;
         goto finish;
     } else if (pa_streq(s, "surround-40")) {
         map.channels = 4;

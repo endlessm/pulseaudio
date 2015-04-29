@@ -15,9 +15,7 @@
     General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with PulseAudio; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-    USA.
+    along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -274,7 +272,7 @@ static void source_output_push_cb(pa_source_output *o, const pa_memchunk *chunk)
     pa_source_output_assert_io_context(o);
     pa_assert_se(u = o->userdata);
 
-    if (u->skip > chunk->length) {
+    if (u->skip >= chunk->length) {
         u->skip -= chunk->length;
         return;
     }

@@ -17,15 +17,12 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <sys/types.h>
 
-int pa_authkey_load(const char *path, bool create, void *data, size_t len);
-int pa_authkey_load_auto(const char *fn, bool create, void *data, size_t length);
+int pa_authkey_load(const char *fn, bool create, void *data, size_t length);
 
 int pa_authkey_save(const char *path, const void *data, size_t length);
 

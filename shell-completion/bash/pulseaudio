@@ -112,7 +112,7 @@ _pactl() {
     local cur prev words cword preprev command
     local comps
     local flags='-h --help --version -s --server= --client-name='
-    local list_types='short sinks sources sink-inputs source outputs cards
+    local list_types='short sinks sources sink-inputs source-outputs cards
                     modules samples clients'
     local commands=(stat info list exit upload-sample play-sample remove-sample
                     load-module unload-module move-sink-input move-source-output
@@ -178,8 +178,6 @@ _pactl() {
 
     case $prev in
         list) COMPREPLY=($(compgen -W '${list_types[*]}' -- "$cur")) ;;
-
-        stat) COMPREPLY=($(compgen -W 'short' -- "$cur")) ;;
 
         upload-sample) _filedir ;;
 
@@ -492,7 +490,7 @@ _pacat () {
             ;;
     esac
 }
-complete -F _pacat pacat paplay parecord
+complete -F _pacat pacat paplay parec parecord
 
 _pulseaudio()
 {

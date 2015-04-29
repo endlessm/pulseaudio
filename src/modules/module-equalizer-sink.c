@@ -21,9 +21,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -232,7 +230,7 @@ static void alloc_input_buffers(struct userdata *u, size_t min_buffer_length) {
         if (u->input[c]) {
             if (!u->first_iteration)
                 memcpy(tmp, u->input[c], u->overlap_size * sizeof(float));
-            free(u->input[c]);
+            fftwf_free(u->input[c]);
         }
         u->input[c] = tmp;
     }
@@ -674,8 +672,6 @@ END:
     pa_assert(chunk->memblock);
     pa_memblockq_drop(u->output_q, chunk->length);
 
-    /** FIXME: Uh? you need to unref the chunk here! */
-
     //pa_log_debug("gave %ld", chunk->length/fs);
     //pa_log_debug("end pop");
     return 0;
@@ -1096,6 +1092,10 @@ int pa__init(pa_module*m) {
 
     pa_assert(m);
 
+    pa_log_warn("module-equalizer-sink is currently unsupported, and can sometimes cause "
+                "PulseAudio crashes, increased latency or audible artifacts.");
+    pa_log_warn("If you're facing audio problems, try unloading this module as a potential workaround.");
+
     if (!(ma = pa_modargs_new(m->argument, valid_modargs))) {
         pa_log("Failed to parse module arguments.");
         goto fail;
@@ -1340,22 +1340,22 @@ void pa__done(pa_module*m) {
 
     fftwf_destroy_plan(u->inverse_plan);
     fftwf_destroy_plan(u->forward_plan);
-    pa_xfree(u->output_window);
+    fftwf_free(u->output_window);
     for (c = 0; c < u->channels; ++c) {
         pa_aupdate_free(u->a_H[c]);
-        pa_xfree(u->overlap_accum[c]);
-        pa_xfree(u->input[c]);
+        fftwf_free(u->overlap_accum[c]);
+        fftwf_free(u->input[c]);
     }
     pa_xfree(u->a_H);
     pa_xfree(u->overlap_accum);
     pa_xfree(u->input);
-    pa_xfree(u->work_buffer);
-    pa_xfree(u->W);
+    fftwf_free(u->work_buffer);
+    fftwf_free(u->W);
     for (c = 0; c < u->channels; ++c) {
         pa_xfree(u->Xs[c]);
         for (size_t i = 0; i < 2; ++i)
-            pa_xfree(u->Hs[c][i]);
-        pa_xfree(u->Hs[c]);
+            fftwf_free(u->Hs[c][i]);
+        fftwf_free(u->Hs[c]);
     }
     pa_xfree(u->Xs);
     pa_xfree(u->Hs);
@@ -1619,7 +1619,7 @@ void dbus_done(struct userdata *u) {
 
     pa_assert_se(sink_list=pa_shared_get(u->sink->core,SINKLIST));
     pa_idxset_remove_by_data(sink_list,u,&dummy);
-    if (pa_idxset_size(sink_list)==0) {
+    if (pa_idxset_size(sink_list) == 0) {
         pa_dbus_protocol_unregister_extension(u->dbus_protocol, EXTNAME);
         pa_dbus_protocol_remove_interface(u->dbus_protocol, MANAGER_PATH, manager_info.name);
         pa_shared_remove(u->sink->core, EQDB);

@@ -16,9 +16,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -32,6 +30,7 @@
 #include <pulsecore/g711.h>
 #include <pulsecore/endianmacros.h>
 
+#include "cpu.h"
 #include "mix.h"
 
 #define VOLUME_PADDING 32
@@ -445,7 +444,7 @@ static void pa_mix_s24_32re_c(pa_mix_info streams[], unsigned nstreams, unsigned
                 v = (v * cv) >> 16;
                 sum += v;
             }
-            m->ptr = (uint8_t*) m->ptr + 3;
+            m->ptr = (uint8_t*) m->ptr + sizeof(int32_t);
         }
 
         sum = PA_CLAMP_UNLIKELY(sum, -0x80000000LL, 0x7FFFFFFFLL);
@@ -576,17 +575,14 @@ static void pa_mix_float32re_c(pa_mix_info streams[], unsigned nstreams, unsigne
 
         for (i = 0; i < nstreams; i++) {
             pa_mix_info *m = streams + i;
-            float v, cv = m->linear[channel].f;
+            float cv = m->linear[channel].f;
 
-            if (PA_LIKELY(cv > 0)) {
-                v = PA_FLOAT32_SWAP(*(float*) m->ptr);
-                v *= cv;
-                sum += v;
-            }
+            if (PA_LIKELY(cv > 0))
+                sum += PA_READ_FLOAT32RE(m->ptr) * cv;
             m->ptr = (uint8_t*) m->ptr + sizeof(float);
         }
 
-        *data = PA_FLOAT32_SWAP(sum);
+        PA_WRITE_FLOAT32RE(data, sum);
 
         if (PA_UNLIKELY(++channel >= channels))
             channel = 0;
@@ -609,6 +605,13 @@ static pa_do_mix_func_t do_mix_table[] = {
     [PA_SAMPLE_S24_32RE]  = (pa_do_mix_func_t) pa_mix_s24_32re_c
 };
 
+void pa_mix_func_init(const pa_cpu_info *cpu_info) {
+    if (cpu_info->force_generic_code)
+        do_mix_table[PA_SAMPLE_S16NE] = (pa_do_mix_func_t) pa_mix_generic_s16ne;
+    else
+        do_mix_table[PA_SAMPLE_S16NE] = (pa_do_mix_func_t) pa_mix_s16ne_c;
+}
+
 size_t pa_mix(
         pa_mix_info streams[],
         unsigned nstreams,
@@ -625,19 +628,19 @@ size_t pa_mix(
     pa_assert(data);
     pa_assert(length);
     pa_assert(spec);
+    pa_assert(nstreams > 1);
 
     if (!volume)
         volume = pa_cvolume_reset(&full_volume, spec->channels);
 
-    if (mute || pa_cvolume_is_muted(volume) || nstreams <= 0) {
+    if (mute || pa_cvolume_is_muted(volume)) {
         pa_silence_memory(data, length, spec);
         return length;
     }
 
     for (k = 0; k < nstreams; k++) {
+        pa_assert(length <= streams[k].chunk.length);
         streams[k].ptr = pa_memblock_acquire_chunk(&streams[k].chunk);
-        if (length > streams[k].chunk.length)
-            length = streams[k].chunk.length;
     }
 
     calc_stream_volumes_table[spec->format](streams, nstreams, volume, spec);
@@ -702,10 +705,10 @@ void pa_volume_memchunk(
     if (pa_memblock_is_silence(c->memblock))
         return;
 
-    if (pa_cvolume_channels_equal_to(volume, PA_VOLUME_NORM))
+    if (pa_cvolume_is_norm(volume))
         return;
 
-    if (pa_cvolume_channels_equal_to(volume, PA_VOLUME_MUTED)) {
+    if (pa_cvolume_is_muted(volume)) {
         pa_silence_memchunk(c, spec);
         return;
     }

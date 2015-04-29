@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -60,7 +58,7 @@
 
 PA_MODULE_AUTHOR("Lennart Poettering");
 PA_MODULE_DESCRIPTION("JACK Sink");
-PA_MODULE_LOAD_ONCE(true);
+PA_MODULE_LOAD_ONCE(false);
 PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_USAGE(
         "sink_name=<name for the sink> "
@@ -232,7 +230,7 @@ static void thread_func(void *userdata) {
         if (PA_UNLIKELY(u->sink->thread_info.rewind_requested))
             pa_sink_process_rewind(u->sink, 0);
 
-        if ((ret = pa_rtpoll_run(u->rtpoll, true)) < 0)
+        if ((ret = pa_rtpoll_run(u->rtpoll)) < 0)
             goto fail;
 
         if (ret == 0)

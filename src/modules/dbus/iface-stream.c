@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -765,7 +763,7 @@ static void subscription_cb(pa_core *c, pa_subscription_event_type_t t, uint32_t
             }
         }
 
-        new_mute = pa_sink_input_get_mute(s->sink_input);
+        new_mute = s->sink_input->muted;
 
         if (s->mute != new_mute) {
             s->mute = new_mute;
@@ -861,7 +859,7 @@ pa_dbusiface_stream *pa_dbusiface_stream_new_playback(pa_dbusiface_core *core, p
     else
         pa_cvolume_init(&s->volume);
 
-    s->mute = pa_sink_input_get_mute(sink_input);
+    s->mute = sink_input->muted;
     s->proplist = pa_proplist_copy(sink_input->proplist);
     s->dbus_protocol = pa_dbus_protocol_get(sink_input->core);
     s->subscription = pa_subscription_new(sink_input->core, PA_SUBSCRIPTION_MASK_SINK_INPUT, subscription_cb, s);

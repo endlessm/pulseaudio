@@ -12,9 +12,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -130,7 +128,7 @@ START_TEST (memblock_test) {
 
         pa_log("A: Memory block exported as %u", id);
 
-        mb_b = pa_memimport_get(import_b, id, shm_id, offset, size);
+        mb_b = pa_memimport_get(import_b, id, shm_id, offset, size, false);
         fail_unless(mb_b != NULL);
         r = pa_memexport_put(export_b, mb_b, &id, &shm_id, &offset, &size);
         fail_unless(r >= 0);
@@ -139,7 +137,7 @@ START_TEST (memblock_test) {
 
         pa_log("B: Memory block exported as %u", id);
 
-        mb_c = pa_memimport_get(import_c, id, shm_id, offset, size);
+        mb_c = pa_memimport_get(import_c, id, shm_id, offset, size, false);
         fail_unless(mb_c != NULL);
         x = pa_memblock_acquire(mb_c);
         pa_log_debug("1 data=%s", x);

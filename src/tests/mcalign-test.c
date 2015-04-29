@@ -12,16 +12,13 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include <assert.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -56,7 +53,7 @@ int main(int argc, char *argv[]) {
             c.index = c.length = 0;
         }
 
-        assert(c.index < pa_memblock_get_length(c.memblock));
+        pa_assert(c.index < pa_memblock_get_length(c.memblock));
 
         l = pa_memblock_get_length(c.memblock) - c.index;
 
@@ -74,7 +71,7 @@ int main(int argc, char *argv[]) {
 
         c.length = (size_t) r;
         pa_mcalign_push(a, &c);
-        fprintf(stderr, "Read %ld bytes\n", (long)r);
+        fprintf(stderr, "Read %zd bytes\n", r);
 
         c.index += (size_t) r;
 

@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -152,15 +150,7 @@ int main(int argc, char *argv[]) {
             char hx[PA_NATIVE_COOKIE_LENGTH*2+1];
             assert(conf);
 
-            if (pa_client_conf_load(conf, NULL) < 0) {
-                fprintf(stderr, _("Failed to load client configuration file.\n"));
-                goto finish;
-            }
-
-            if (pa_client_conf_env(conf) < 0) {
-                fprintf(stderr, _("Failed to read environment configuration data.\n"));
-                goto finish;
-            }
+            pa_client_conf_load(conf, false, true);
 
             pa_x11_del_prop(xcb, screen, "PULSE_SERVER");
             pa_x11_del_prop(xcb, screen, "PULSE_SINK");
@@ -194,7 +184,7 @@ int main(int argc, char *argv[]) {
 
             pa_client_conf_free(conf);
 
-            if (pa_authkey_load_auto(cookie_file, true, cookie, sizeof(cookie)) < 0) {
+            if (pa_authkey_load(cookie_file, true, cookie, sizeof(cookie)) < 0) {
                 fprintf(stderr, _("Failed to load cookie data\n"));
                 goto finish;
             }

@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -99,7 +97,9 @@ int main(int argc, char *argv[]) {
     GConfClient *client;
     GSList *modules, *m;
 
+#if !GLIB_CHECK_VERSION(2,36,0)
     g_type_init();
+#endif
 
     if (!(client = gconf_client_get_default()))
         goto fail;

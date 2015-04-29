@@ -18,9 +18,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <sys/types.h>
@@ -35,6 +33,8 @@
 
 #include <pulse/gccmacro.h>
 #include <pulse/volume.h>
+
+#include <pulsecore/i18n.h>
 #include <pulsecore/macro.h>
 #include <pulsecore/socket.h>
 
@@ -90,7 +90,7 @@ int pa_parse_boolean(const char *s) PA_GCC_PURE;
 int pa_parse_volume(const char *s, pa_volume_t *volume);
 
 static inline const char *pa_yes_no(bool b) {
-    return b ? "yes" : "no";
+    return b ? _("yes") : _("no");
 }
 
 static inline const char *pa_strnull(const char *x) {
@@ -136,6 +136,9 @@ char* pa_find_config_file(const char *global, const char *local, const char *env
 char *pa_get_runtime_dir(void);
 char *pa_get_state_dir(void);
 char *pa_get_home_dir_malloc(void);
+int pa_append_to_home_dir(const char *path, char **_r);
+int pa_get_config_home_dir(char **_r);
+int pa_append_to_config_home_dir(const char *path, char **_r);
 char *pa_get_binary_name_malloc(void);
 char *pa_runtime_path(const char *fn);
 char *pa_state_path(const char *fn, bool prepend_machine_id);
@@ -205,6 +208,7 @@ int pa_reset_sigs(int except, ...);
 int pa_reset_sigsv(const int except[]);
 
 void pa_set_env(const char *key, const char *value);
+void pa_unset_env(const char *key);
 void pa_set_env_and_record(const char *key, const char *value);
 void pa_unset_env_recorded(void);
 

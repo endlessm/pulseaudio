@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 /* General power management rules:
@@ -1131,7 +1129,7 @@ static void thread_func(void *userdata) {
         }
 
         /* Hmm, nothing to do. Let's sleep */
-        if ((ret = pa_rtpoll_run(u->rtpoll, true)) < 0)
+        if ((ret = pa_rtpoll_run(u->rtpoll)) < 0)
             goto fail;
 
         if (ret == 0)

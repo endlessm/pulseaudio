@@ -16,9 +16,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -51,6 +49,9 @@
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_SYSTEMD_DAEMON
+#include <systemd/sd-daemon.h>
 #endif
 
 #include <pulsecore/core-error.h>
@@ -254,6 +255,21 @@ int pa_unix_socket_remove_stale(const char *fn) {
     int r;
 
     pa_assert(fn);
+
+#ifdef HAVE_SYSTEMD_DAEMON
+    {
+        int n = sd_listen_fds(0);
+        if (n > 0) {
+            for (int i = 0; i < n; ++i) {
+                if (sd_is_socket_unix(SD_LISTEN_FDS_START + i, SOCK_STREAM, 1, fn, 0) > 0) {
+                    /* This is a socket activated socket, therefore do not consider
+                    * it stale. */
+                    return 0;
+                }
+            }
+        }
+    }
+#endif
 
     if ((r = pa_unix_socket_is_stale(fn)) < 0)
         return errno != ENOENT ? -1 : 0;

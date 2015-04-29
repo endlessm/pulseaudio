@@ -18,9 +18,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <inttypes.h>
@@ -41,7 +39,7 @@ pa_pdispatch* pa_pdispatch_new(pa_mainloop_api *m, bool use_rtclock, const pa_pd
 void pa_pdispatch_unref(pa_pdispatch *pd);
 pa_pdispatch* pa_pdispatch_ref(pa_pdispatch *pd);
 
-int pa_pdispatch_run(pa_pdispatch *pd, pa_packet*p, const pa_creds *creds, void *userdata);
+int pa_pdispatch_run(pa_pdispatch *pd, pa_packet *p, const pa_cmsg_ancil_data *ancil_data, void *userdata);
 
 void pa_pdispatch_register_reply(pa_pdispatch *pd, uint32_t tag, int timeout, pa_pdispatch_cb_t callback, void *userdata, pa_free_cb_t free_cb);
 
@@ -53,5 +51,7 @@ void pa_pdispatch_set_drain_callback(pa_pdispatch *pd, pa_pdispatch_drain_cb_t c
 void pa_pdispatch_unregister_reply(pa_pdispatch *pd, void *userdata);
 
 const pa_creds * pa_pdispatch_creds(pa_pdispatch *pd);
+
+const int * pa_pdispatch_fds(pa_pdispatch *pd, int *nfd);
 
 #endif

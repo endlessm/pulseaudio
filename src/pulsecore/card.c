@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -201,7 +199,7 @@ pa_card *pa_card_new(pa_core *core, pa_card_new_data *data) {
     c->userdata = NULL;
     c->set_profile = NULL;
 
-    pa_device_init_description(c->proplist);
+    pa_device_init_description(c->proplist, c);
     pa_device_init_icon(c->proplist, true);
     pa_device_init_intended_roles(c->proplist);
 

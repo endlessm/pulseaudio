@@ -17,9 +17,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <sys/types.h>
@@ -27,6 +25,8 @@
 /* A simple, asynchronous semaphore which uses fds for sleeping. In
  * the best case all functions are lock-free unless sleeping is
  * required.  */
+
+#include <pulsecore/atomic.h>
 
 typedef struct pa_fdsem pa_fdsem;
 
@@ -38,7 +38,7 @@ typedef struct pa_fdsem_data {
 
 pa_fdsem *pa_fdsem_new(void);
 pa_fdsem *pa_fdsem_open_shm(pa_fdsem_data *data, int event_fd);
-pa_fdsem *pa_fdsem_new_shm(pa_fdsem_data *data, int* event_fd);
+pa_fdsem *pa_fdsem_new_shm(pa_fdsem_data *data);
 void pa_fdsem_free(pa_fdsem *f);
 
 void pa_fdsem_post(pa_fdsem *f);

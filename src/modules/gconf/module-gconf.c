@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -284,16 +282,11 @@ static int handle_event(struct userdata *u) {
 
             case '-': {
                 char *name;
-                struct module_info *m;
 
                 if (!(name = read_string(u)))
                     goto fail;
 
-                if ((m = pa_hashmap_get(u->module_infos, name))) {
-                    pa_hashmap_remove(u->module_infos, name);
-                    module_info_free(m);
-                }
-
+                pa_hashmap_remove_and_free(u->module_infos, name);
                 pa_xfree(name);
 
                 break;

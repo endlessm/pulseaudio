@@ -15,9 +15,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -63,6 +61,15 @@
 #include <pulsecore/usergroup.h>
 
 #include "util.h"
+
+#if defined(HAVE_DLADDR) && defined(PA_GCC_WEAKREF)
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+#include <dlfcn.h>
+
+static int _main() PA_GCC_WEAKREF(main);
+#endif
 
 char *pa_get_user_name(char *s, size_t l) {
     const char *p;
@@ -132,19 +139,23 @@ char *pa_get_host_name(char *s, size_t l) {
 
 char *pa_get_home_dir(char *s, size_t l) {
     char *e;
-#ifdef HAVE_PWD_H
     char *dir;
+#ifdef HAVE_PWD_H
     struct passwd *r;
 #endif
 
     pa_assert(s);
     pa_assert(l > 0);
 
-    if ((e = getenv("HOME")))
-        return pa_strlcpy(s, e, l);
+    if ((e = getenv("HOME"))) {
+        dir = pa_strlcpy(s, e, l);
+        goto finish;
+    }
 
-    if ((e = getenv("USERPROFILE")))
-        return pa_strlcpy(s, e, l);
+    if ((e = getenv("USERPROFILE"))) {
+        dir = pa_strlcpy(s, e, l);
+        goto finish;
+    }
 
 #ifdef HAVE_PWD_H
     errno = 0;
@@ -158,13 +169,21 @@ char *pa_get_home_dir(char *s, size_t l) {
     dir = pa_strlcpy(s, r->pw_dir, l);
 
     pa_getpwuid_free(r);
+#endif /* HAVE_PWD_H */
+
+finish:
+    if (!dir) {
+        errno = ENOENT;
+        return NULL;
+    }
+
+    if (!pa_is_path_absolute(dir)) {
+        pa_log("Failed to get the home directory, not an absolute path: %s", dir);
+        errno = ENOENT;
+        return NULL;
+    }
 
     return dir;
-#else /* HAVE_PWD_H */
-
-    errno = ENOENT;
-    return NULL;
-#endif
 }
 
 char *pa_get_binary_name(char *s, size_t l) {
@@ -181,10 +200,10 @@ char *pa_get_binary_name(char *s, size_t l) {
     }
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD_kernel__)
     {
         char *rp;
-        /* This works on Linux only */
+        /* This works on Linux and Debian/kFreeBSD */
 
         if ((rp = pa_readlink("/proc/self/exe"))) {
             pa_strlcpy(s, pa_path_get_filename(rp), l);
@@ -202,6 +221,20 @@ char *pa_get_binary_name(char *s, size_t l) {
             pa_strlcpy(s, pa_path_get_filename(rp), l);
             pa_xfree(rp);
             return s;
+        }
+    }
+#endif
+
+#if defined(HAVE_DLADDR) && defined(PA_GCC_WEAKREF)
+    {
+        Dl_info info;
+        if(_main) {
+            int err = dladdr(&_main, &info);
+            if (err != 0) {
+                char *p = pa_realpath(info.dli_fname);
+                if (p)
+                    return p;
+            }
         }
     }
 #endif

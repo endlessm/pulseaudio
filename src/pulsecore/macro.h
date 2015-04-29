@@ -17,9 +17,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <sys/types.h>
@@ -76,6 +74,12 @@ static inline void* PA_PAGE_ALIGN_PTR(const void *p) {
 static inline size_t PA_PAGE_ALIGN(size_t l) {
     return (l + PA_PAGE_SIZE - 1) & ~(PA_PAGE_SIZE - 1);
 }
+
+#if defined(__GNUC__)
+    #define PA_UNUSED __attribute__ ((unused))
+#else
+    #define PA_UNUSED
+#endif
 
 #define PA_ELEMENTSOF(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -231,7 +235,7 @@ static inline size_t PA_PAGE_ALIGN(size_t l) {
 #endif
 
 #ifdef NDEBUG
-#define pa_assert_not_reached() pa_nop()
+#define pa_assert_not_reached() abort()
 #else
 #define pa_assert_not_reached()                                         \
     do {                                                                \

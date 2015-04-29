@@ -18,9 +18,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 typedef struct pa_source pa_source;
@@ -58,6 +56,8 @@ static inline bool PA_SOURCE_IS_LINKED(pa_source_state_t x) {
 /* A generic definition for void callback functions */
 typedef void(*pa_source_cb_t)(pa_source *s);
 
+typedef int (*pa_source_get_mute_cb_t)(pa_source *s, bool *mute);
+
 struct pa_source {
     pa_msgobject parent;
 
@@ -88,7 +88,7 @@ struct pa_source {
     pa_volume_t base_volume; /* shall be constant */
     unsigned n_volume_steps; /* shall be constant */
 
-    /* Also see http://pulseaudio.org/wiki/InternalVolumes */
+    /* Also see http://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Volumes/ */
     pa_cvolume reference_volume; /* The volume exported and taken as reference base for relative source output volumes */
     pa_cvolume real_volume;      /* The volume that the hardware is configured to  */
     pa_cvolume soft_volume;      /* The internal software volume we apply to all PCM data while it passes through */
@@ -117,6 +117,8 @@ struct pa_source {
     int64_t latency_offset;
 
     unsigned priority;
+
+    bool set_mute_in_progress;
 
     /* Called when the main loop requests a state change. Called from
      * main loop context. If returns -1 the state change will be
@@ -156,14 +158,24 @@ struct pa_source {
      * set this callback. */
     pa_source_cb_t write_volume; /* may be NULL */
 
-    /* Called when the mute setting is queried. Called from main loop
-     * context. If this is NULL a PA_SOURCE_MESSAGE_GET_MUTE message
-     * will be sent to the IO thread instead. If refresh_mute is
-     * false neither this function is called nor a message is sent.
+    /* If the source mute can change "spontaneously" (i.e. initiated by the
+     * source implementation, not by someone else calling
+     * pa_source_set_mute()), then the source implementation can notify about
+     * changed mute either by calling pa_source_mute_changed() or by calling
+     * pa_source_get_mute() with force_refresh=true. If the implementation
+     * chooses the latter approach, it should implement the get_mute callback.
+     * Otherwise get_mute can be NULL.
+     *
+     * This is called when pa_source_get_mute() is called with
+     * force_refresh=true. This is called from the IO thread if the
+     * PA_SINK_DEFERRED_VOLUME flag is set, otherwise this is called from the
+     * main thread. On success, the implementation is expected to return 0 and
+     * set the mute parameter that is passed as a reference. On failure, the
+     * implementation is expected to return -1.
      *
      * You must use the function pa_source_set_get_mute_callback() to
      * set this callback. */
-    pa_source_cb_t get_mute; /* may be NULL */
+    pa_source_get_mute_cb_t get_mute;
 
     /* Called when the mute setting shall be changed. Called from main
      * loop context. If this is NULL a PA_SOURCE_MESSAGE_SET_MUTE
@@ -314,7 +326,7 @@ pa_source* pa_source_new(
 void pa_source_set_get_volume_callback(pa_source *s, pa_source_cb_t cb);
 void pa_source_set_set_volume_callback(pa_source *s, pa_source_cb_t cb);
 void pa_source_set_write_volume_callback(pa_source *s, pa_source_cb_t cb);
-void pa_source_set_get_mute_callback(pa_source *s, pa_source_cb_t cb);
+void pa_source_set_get_mute_callback(pa_source *s, pa_source_get_mute_cb_t cb);
 void pa_source_set_set_mute_callback(pa_source *s, pa_source_cb_t cb);
 void pa_source_enable_decibel_volume(pa_source *s, bool enable);
 
@@ -425,6 +437,13 @@ bool pa_source_volume_change_apply(pa_source *s, pa_usec_t *usec_to_next);
 
 void pa_source_invalidate_requested_latency(pa_source *s, bool dynamic);
 pa_usec_t pa_source_get_latency_within_thread(pa_source *s);
+
+/* Called from the main thread, from source-output.c only. The normal way to
+ * set the source reference volume is to call pa_source_set_volume(), but the
+ * flat volume logic in source-output.c needs also a function that doesn't do
+ * all the extra stuff that pa_source_set_volume() does. This function simply
+ * sets s->reference_volume and fires change notifications. */
+void pa_source_set_reference_volume_direct(pa_source *s, const pa_cvolume *volume);
 
 #define pa_source_assert_io_context(s) \
     pa_assert(pa_thread_mq_get() || !PA_SOURCE_IS_LINKED((s)->state))

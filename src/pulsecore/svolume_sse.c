@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -34,7 +32,7 @@
 
 #include "sample-util.h"
 
-#if (!defined(__FreeBSD__) && defined (__i386__)) || defined (__amd64__)
+#if (!defined(__FreeBSD__) && !defined(__FreeBSD_kernel__) && defined (__i386__)) || defined (__amd64__)
 
 #define VOLUME_32x16(s,v)                  /* .. |   vh  |   vl  | */                   \
       " pxor %%xmm4, %%xmm4          \n\t" /* .. |    0  |    0  | */                   \
@@ -251,15 +249,15 @@ static void pa_volume_s16re_sse2(int16_t *samples, const int32_t *volumes, unsig
     );
 }
 
-#endif /* (!defined(__FreeBSD__) && defined (__i386__)) || defined (__amd64__) */
+#endif /* (!defined(__FreeBSD__) && !defined(__FreeBSD_kernel__) && defined (__i386__)) || defined (__amd64__) */
 
 void pa_volume_func_init_sse(pa_cpu_x86_flag_t flags) {
-#if (!defined(__FreeBSD__) && defined (__i386__)) || defined (__amd64__)
+#if (!defined(__FreeBSD__) && !defined(__FreeBSD_kernel__) && defined (__i386__)) || defined (__amd64__)
     if (flags & PA_CPU_X86_SSE2) {
         pa_log_info("Initialising SSE2 optimized volume functions.");
 
         pa_set_volume_func(PA_SAMPLE_S16NE, (pa_do_volume_func_t) pa_volume_s16ne_sse2);
         pa_set_volume_func(PA_SAMPLE_S16RE, (pa_do_volume_func_t) pa_volume_s16re_sse2);
     }
-#endif /* (!defined(__FreeBSD__) && defined (__i386__)) || defined (__amd64__) */
+#endif /* (!defined(__FreeBSD__) && !defined(__FreeBSD_kernel__) && defined (__i386__)) || defined (__amd64__) */
 }

@@ -12,9 +12,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -62,7 +60,7 @@ START_TEST (rtpoll_test) {
 
     pa_rtpoll_set_timer_relative(p, 10000000); /* 10 s */
 
-    pa_rtpoll_run(p, 1);
+    pa_rtpoll_run(p);
 
     pa_rtpoll_item_free(i);
 
@@ -74,7 +72,7 @@ START_TEST (rtpoll_test) {
     pollfd->fd = 0;
     pollfd->events = POLLIN;
 
-    pa_rtpoll_run(p, 1);
+    pa_rtpoll_run(p);
 
     pa_rtpoll_item_free(i);
 

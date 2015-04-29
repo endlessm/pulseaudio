@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -46,7 +44,7 @@ const char*pa_strerror(int error) {
         [PA_ERR_CONNECTIONREFUSED] = N_("Connection refused"),
         [PA_ERR_PROTOCOL] = N_("Protocol error"),
         [PA_ERR_TIMEOUT] = N_("Timeout"),
-        [PA_ERR_AUTHKEY] = N_("No authorization key"),
+        [PA_ERR_AUTHKEY] = N_("No authentication key"),
         [PA_ERR_INTERNAL] = N_("Internal error"),
         [PA_ERR_CONNECTIONTERMINATED] = N_("Connection terminated"),
         [PA_ERR_KILLED] = N_("Entity killed"),

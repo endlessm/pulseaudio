@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -72,7 +70,7 @@ pa_core* pa_core_new(pa_mainloop_api *m, bool shared, size_t shm_size) {
 
     if (shared) {
         if (!(pool = pa_mempool_new(shared, shm_size))) {
-            pa_log_warn("failed to allocate shared memory pool. Falling back to a normal memory pool.");
+            pa_log_warn("Failed to allocate shared memory pool. Falling back to a normal memory pool.");
             shared = false;
         }
     }
@@ -117,7 +115,7 @@ pa_core* pa_core_new(pa_mainloop_api *m, bool shared, size_t shm_size) {
     c->deferred_volume_extra_delay_usec = 0;
 
     c->module_defer_unload_event = NULL;
-    c->scache_auto_unload_event = NULL;
+    c->modules_pending_unload = pa_hashmap_new(NULL, NULL);
 
     c->subscription_defer_event = NULL;
     PA_LLIST_HEAD_INIT(pa_subscription, c->subscriptions);
@@ -127,7 +125,13 @@ pa_core* pa_core_new(pa_mainloop_api *m, bool shared, size_t shm_size) {
     c->mempool = pool;
     pa_silence_cache_init(&c->silence_cache);
 
+    if (shared && !(c->rw_mempool = pa_mempool_new(shared, shm_size)))
+        pa_log_warn("Failed to allocate shared writable memory pool.");
+    if (c->rw_mempool)
+        pa_mempool_set_is_remote_writable(c->rw_mempool, true);
+
     c->exit_event = NULL;
+    c->scache_auto_unload_event = NULL;
 
     c->exit_idle_time = -1;
     c->scache_idle_time = 20;
@@ -203,6 +207,9 @@ static void core_free(pa_object *o) {
     pa_assert(pa_hashmap_isempty(c->shared));
     pa_hashmap_free(c->shared);
 
+    pa_assert(pa_hashmap_isempty(c->modules_pending_unload));
+    pa_hashmap_free(c->modules_pending_unload);
+
     pa_subscription_free_all(c);
 
     if (c->exit_event)
@@ -212,6 +219,8 @@ static void core_free(pa_object *o) {
     pa_assert(!c->default_sink);
 
     pa_silence_cache_done(&c->silence_cache);
+    if (c->rw_mempool)
+        pa_mempool_free(c->rw_mempool);
     pa_mempool_free(c->mempool);
 
     for (j = 0; j < PA_CORE_HOOK_MAX; j++)
@@ -258,7 +267,6 @@ void pa_core_maybe_vacuum(pa_core *c) {
 
     if (pa_idxset_isempty(c->sink_inputs) && pa_idxset_isempty(c->source_outputs)) {
         pa_log_debug("Hmm, no streams around, trying to vacuum.");
-        pa_mempool_vacuum(c->mempool);
     } else {
         pa_sink *si;
         pa_source *so;
@@ -275,8 +283,12 @@ void pa_core_maybe_vacuum(pa_core *c) {
                 return;
 
         pa_log_info("All sinks and sources are suspended, vacuuming memory");
-        pa_mempool_vacuum(c->mempool);
     }
+
+    pa_mempool_vacuum(c->mempool);
+
+    if (c->rw_mempool)
+        pa_mempool_vacuum(c->rw_mempool);
 }
 
 pa_time_event* pa_core_rttime_new(pa_core *c, pa_usec_t usec, pa_time_event_cb_t cb, void *userdata) {

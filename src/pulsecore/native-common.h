@@ -18,9 +18,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <pulse/cdecl.h>
@@ -176,11 +174,16 @@ enum {
     /* Supported since protocol v27 (3.0) */
     PA_COMMAND_SET_PORT_LATENCY_OFFSET,
 
+    /* Supported since protocol v30 (6.0) */
+    /* BOTH DIRECTIONS */
+    PA_COMMAND_ENABLE_SRBCHANNEL,
+    PA_COMMAND_DISABLE_SRBCHANNEL,
+
     PA_COMMAND_MAX
 };
 
 #define PA_NATIVE_COOKIE_LENGTH 256
-#define PA_NATIVE_COOKIE_FILE ".config/pulse/cookie"
+#define PA_NATIVE_COOKIE_FILE "cookie"
 #define PA_NATIVE_COOKIE_FILE_FALLBACK ".pulse-cookie"
 
 #define PA_NATIVE_DEFAULT_PORT 4713

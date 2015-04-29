@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -114,7 +112,6 @@ struct pa_mainloop {
     int retval;
     bool quit:1;
 
-    pa_atomic_t wakeup_requested;
     int wakeup_pipe[2];
     int wakeup_pipe_type;
 
@@ -772,10 +769,8 @@ void pa_mainloop_wakeup(pa_mainloop *m) {
     pa_assert(m);
 
     if (pa_write(m->wakeup_pipe[1], &c, sizeof(c), &m->wakeup_pipe_type) < 0)
-        /* Not much options for recovering from the error. Let's at least log something. */
+        /* Not many options for recovering from the error. Let's at least log something. */
         pa_log("pa_write() failed while trying to wake up the mainloop: %s", pa_cstrerror(errno));
-
-    pa_atomic_store(&m->wakeup_requested, true);
 }
 
 static void clear_wakeup(pa_mainloop *m) {
@@ -783,10 +778,8 @@ static void clear_wakeup(pa_mainloop *m) {
 
     pa_assert(m);
 
-    if (pa_atomic_cmpxchg(&m->wakeup_requested, true, false)) {
-        while (pa_read(m->wakeup_pipe[0], &c, sizeof(c), &m->wakeup_pipe_type) == sizeof(c))
-            ;
-    }
+    while (pa_read(m->wakeup_pipe[0], &c, sizeof(c), &m->wakeup_pipe_type) == sizeof(c))
+        ;
 }
 
 int pa_mainloop_prepare(pa_mainloop *m, int timeout) {
@@ -842,7 +835,7 @@ int pa_mainloop_poll(pa_mainloop *m) {
 
     m->state = STATE_POLLING;
 
-    if (m->n_enabled_defer_events )
+    if (m->n_enabled_defer_events)
         m->poll_func_ret = 0;
     else {
         pa_assert(!m->rebuild_pollfds);

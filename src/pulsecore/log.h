@@ -18,9 +18,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <stdarg.h>
@@ -35,7 +33,7 @@
 typedef enum pa_log_target_type {
     PA_LOG_STDERR,      /* default */
     PA_LOG_SYSLOG,
-#ifdef HAVE_JOURNAL
+#ifdef HAVE_SYSTEMD_JOURNAL
     PA_LOG_JOURNAL,     /* systemd journal */
 #endif
     PA_LOG_NULL,        /* to /dev/null */
@@ -48,7 +46,7 @@ typedef enum pa_log_level {
     PA_LOG_WARN   = 1,    /* Warning messages */
     PA_LOG_NOTICE = 2,    /* Notice messages */
     PA_LOG_INFO   = 3,    /* Info messages */
-    PA_LOG_DEBUG  = 4,    /* debug message */
+    PA_LOG_DEBUG  = 4,    /* Debug messages */
     PA_LOG_LEVEL_MAX
 } pa_log_level_t;
 

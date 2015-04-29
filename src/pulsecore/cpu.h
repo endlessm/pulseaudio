@@ -17,9 +17,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <pulsecore/cpu-x86.h>
@@ -40,6 +38,12 @@ struct pa_cpu_info {
         pa_cpu_x86_flag_t x86;
         pa_cpu_arm_flag_t arm;
     } flags;
+    bool force_generic_code;
 };
+
+void pa_cpu_init(pa_cpu_info *cpu_info);
+
+void pa_remap_func_init(const pa_cpu_info *cpu_info);
+void pa_mix_func_init(const pa_cpu_info *cpu_info);
 
 #endif /* foocpuhfoo */

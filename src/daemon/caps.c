@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -51,7 +49,7 @@ void pa_drop_root(void) {
     uid_t uid;
     gid_t gid;
 
-    pa_log_debug(_("Cleaning up privileges."));
+    pa_log_debug("Cleaning up privileges.");
     uid = getuid();
     gid = getgid();
 
@@ -86,9 +84,10 @@ void pa_drop_caps(void) {
     pa_assert_se(cap_clear(caps) == 0);
     pa_assert_se(cap_set_proc(caps) == 0);
     pa_assert_se(cap_free(caps) == 0);
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     /* FreeBSD doesn't have this functionality, even though sys/capability.h is
-     * available. See https://bugs.freedesktop.org/show_bug.cgi?id=73967 */
+     * available. See https://bugs.freedesktop.org/show_bug.cgi?id=72580 */
+    pa_log_warn("FreeBSD cannot drop extra capabilities, implementation needed.");
 #else
 #error "Don't know how to do capabilities on your system.  Please send a patch."
 #endif /* __linux__ */

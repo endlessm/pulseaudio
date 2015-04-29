@@ -15,9 +15,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -203,7 +201,7 @@ static void reset_all_revents(pa_rtpoll *p) {
     }
 }
 
-int pa_rtpoll_run(pa_rtpoll *p, bool wait_op) {
+int pa_rtpoll_run(pa_rtpoll *p) {
     pa_rtpoll_item *i;
     int r = 0;
     struct timeval timeout;
@@ -285,7 +283,7 @@ int pa_rtpoll_run(pa_rtpoll *p, bool wait_op) {
     pa_zero(timeout);
 
     /* Calculate timeout */
-    if (wait_op && !p->quit && p->timer_enabled) {
+    if (!p->quit && p->timer_enabled) {
         struct timeval now;
         pa_rtclock_get(&now);
 
@@ -298,10 +296,12 @@ int pa_rtpoll_run(pa_rtpoll *p, bool wait_op) {
         pa_usec_t now = pa_rtclock_now();
         p->awake = now - p->timestamp;
         p->timestamp = now;
-        if (!wait_op || p->quit || p->timer_enabled)
+        if (!p->quit && p->timer_enabled)
             pa_log("poll timeout: %d ms ",(int) ((timeout.tv_sec*1000) + (timeout.tv_usec / 1000)));
-        else
+        else if (q->quit)
             pa_log("poll timeout is ZERO");
+        else
+            pa_log("poll timeout is FOREVER");
     }
 #endif
 
@@ -311,10 +311,10 @@ int pa_rtpoll_run(pa_rtpoll *p, bool wait_op) {
         struct timespec ts;
         ts.tv_sec = timeout.tv_sec;
         ts.tv_nsec = timeout.tv_usec * 1000;
-        r = ppoll(p->pollfd, p->n_pollfd_used, (!wait_op || p->quit || p->timer_enabled) ? &ts : NULL, NULL);
+        r = ppoll(p->pollfd, p->n_pollfd_used, (p->quit || p->timer_enabled) ? &ts : NULL, NULL);
     }
 #else
-    r = pa_poll(p->pollfd, p->n_pollfd_used, (!wait_op || p->quit || p->timer_enabled) ? (int) ((timeout.tv_sec*1000) + (timeout.tv_usec / 1000)) : -1);
+    r = pa_poll(p->pollfd, p->n_pollfd_used, (p->quit || p->timer_enabled) ? (int) ((timeout.tv_sec*1000) + (timeout.tv_usec / 1000)) : -1);
 #endif
 
     p->timer_elapsed = r == 0;

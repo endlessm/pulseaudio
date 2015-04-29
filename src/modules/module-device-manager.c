@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -502,7 +500,7 @@ static inline struct entry *load_or_initialize_entry(struct userdata *u, struct 
         entry->description = pa_xstrdup(old->description);
         entry->icon = pa_xstrdup(old->icon);
     } else {
-        /* This is a new device, so make sure we write it's priority list correctly */
+        /* This is a new device, so make sure we write its priority list correctly */
         role_indexes_t max_priority;
         pa_datum key;
         bool done;
@@ -1328,7 +1326,7 @@ static int extension_cb(pa_native_protocol *p, pa_module *m, pa_native_connectio
                 }
 
                 pa_hashmap_free(h);
-                pa_log_error("Client specified an unknown device in it's reorder list.");
+                pa_log_error("Client specified an unknown device in its reorder list.");
                 goto fail;
             }
             entry_free(e);

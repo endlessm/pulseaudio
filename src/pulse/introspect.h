@@ -18,9 +18,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <inttypes.h>
@@ -326,7 +324,7 @@ typedef struct pa_source_info {
     pa_cvolume volume;                  /**< Volume of the source */
     int mute;                           /**< Mute switch of the sink */
     uint32_t monitor_of_sink;           /**< If this is a monitor source, the index of the owning sink, otherwise PA_INVALID_INDEX. */
-    const char *monitor_of_sink_name;   /**< Name of the owning sink, or PA_INVALID_INDEX. */
+    const char *monitor_of_sink_name;   /**< Name of the owning sink, or NULL. */
     pa_usec_t latency;                  /**< Length of filled record buffer of this source. */
     const char *driver;                 /**< Driver name */
     pa_source_flags_t flags;            /**< Flags */

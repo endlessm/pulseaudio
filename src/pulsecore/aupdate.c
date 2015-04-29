@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -79,7 +77,7 @@ unsigned pa_aupdate_read_begin(pa_aupdate *a) {
 }
 
 void pa_aupdate_read_end(pa_aupdate *a) {
-    unsigned n;
+    unsigned PA_UNUSED n;
 
     pa_assert(a);
 

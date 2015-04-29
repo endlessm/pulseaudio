@@ -12,9 +12,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -36,7 +34,7 @@
 
 START_TEST (format_test) {
     pa_format_info *f1 = NULL, *f2 = NULL;
-    int rates1[] = { 32000, 44100, 48000 }, i, temp_int1 = -1, temp_int2 = -1, *temp_int_array;
+    int rates1[] = { 32000, 44100, 48000 }, i, temp_int1 = -1, PA_UNUSED temp_int2 = -1, *temp_int_array;
     const char *strings[] = { "thing1", "thing2", "thing3" };
     char *temp_str, **temp_str_array;
 

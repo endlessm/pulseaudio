@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -175,6 +173,7 @@ int pa_config_parse(const char *filename, FILE *f, const pa_config_item *t, pa_p
         pa_log_warn("Failed to open configuration file '%s': %s", filename, pa_cstrerror(errno));
         goto finish;
     }
+    pa_log_debug("Parsing configuration file '%s'", filename);
 
     state.filename = filename;
     state.item_table = t;

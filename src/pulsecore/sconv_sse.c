@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -33,7 +31,7 @@
 #include "cpu-x86.h"
 #include "sconv.h"
 
-#if (!defined(__APPLE__) && !defined(__FreeBSD__) && defined (__i386__)) || defined (__amd64__)
+#if (!defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__FreeBSD_kernel__) && defined (__i386__)) || defined (__amd64__)
 
 static const PA_DECLARE_ALIGNED (16, float, scale[4]) = { 0x8000, 0x8000, 0x8000, 0x8000 };
 
@@ -163,15 +161,16 @@ static void pa_sconv_s16le_from_f32ne_sse2(unsigned n, const float *a, int16_t *
 #endif /* defined (__i386__) || defined (__amd64__) */
 
 void pa_convert_func_init_sse(pa_cpu_x86_flag_t flags) {
-#if (!defined(__APPLE__) && !defined(__FreeBSD__) && defined (__i386__)) || defined (__amd64__)
+#if (!defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__FreeBSD_kernel__) && defined (__i386__)) || defined (__amd64__)
 
     if (flags & PA_CPU_X86_SSE2) {
         pa_log_info("Initialising SSE2 optimized conversions.");
         pa_set_convert_from_float32ne_function(PA_SAMPLE_S16LE, (pa_convert_func_t) pa_sconv_s16le_from_f32ne_sse2);
-
+        pa_set_convert_to_s16ne_function(PA_SAMPLE_FLOAT32LE, (pa_convert_func_t) pa_sconv_s16le_from_f32ne_sse2);
     } else if (flags & PA_CPU_X86_SSE) {
         pa_log_info("Initialising SSE optimized conversions.");
         pa_set_convert_from_float32ne_function(PA_SAMPLE_S16LE, (pa_convert_func_t) pa_sconv_s16le_from_f32ne_sse);
+        pa_set_convert_to_s16ne_function(PA_SAMPLE_FLOAT32LE, (pa_convert_func_t) pa_sconv_s16le_from_f32ne_sse);
     }
 
 #endif /* defined (__i386__) || defined (__amd64__) */

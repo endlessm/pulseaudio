@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -40,7 +38,7 @@
 #include <syslog.h>
 #endif
 
-#ifdef HAVE_JOURNAL
+#ifdef HAVE_SYSTEMD_JOURNAL
 #include <systemd/sd-journal.h>
 #endif
 
@@ -96,7 +94,7 @@ static const int level_to_syslog[] = {
 
 /* These are actually equivalent to the syslog ones
  * but we don't want to depend on syslog.h */
-#ifdef HAVE_JOURNAL
+#ifdef HAVE_SYSTEMD_JOURNAL
 static const int level_to_journal[] = {
     [PA_LOG_ERROR]  = 3,
     [PA_LOG_WARN]   = 4,
@@ -145,7 +143,7 @@ int pa_log_set_target(pa_log_target *t) {
     switch (t->type) {
         case PA_LOG_STDERR:
         case PA_LOG_SYSLOG:
-#ifdef HAVE_JOURNAL
+#ifdef HAVE_SYSTEMD_JOURNAL
         case PA_LOG_JOURNAL:
 #endif
         case PA_LOG_NULL:
@@ -488,7 +486,7 @@ void pa_log_levelv_meta(
                 break;
 #endif
 
-#ifdef HAVE_JOURNAL
+#ifdef HAVE_SYSTEMD_JOURNAL
             case PA_LOG_JOURNAL:
                 if (sd_journal_send("MESSAGE=%s", t,
                                 "PRIORITY=%i", level_to_journal[level],
@@ -619,7 +617,7 @@ pa_log_target *pa_log_parse_target(const char *string) {
         t = pa_log_target_new(PA_LOG_STDERR, NULL);
     else if (pa_streq(string, "syslog"))
         t = pa_log_target_new(PA_LOG_SYSLOG, NULL);
-#ifdef HAVE_JOURNAL
+#ifdef HAVE_SYSTEMD_JOURNAL
     else if (pa_streq(string, "journal"))
         t = pa_log_target_new(PA_LOG_JOURNAL, NULL);
 #endif
@@ -647,7 +645,7 @@ char *pa_log_target_to_string(const pa_log_target *t) {
         case PA_LOG_SYSLOG:
             string = pa_xstrdup("syslog");
             break;
-#ifdef HAVE_JOURNAL
+#ifdef HAVE_SYSTEMD_JOURNAL
         case PA_LOG_JOURNAL:
             string = pa_xstrdup("journal");
             break;

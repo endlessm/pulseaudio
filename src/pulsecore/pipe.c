@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -41,7 +39,7 @@ static int set_block(int fd, int blocking) {
 
     int v;
 
-    assert(fd >= 0);
+    pa_assert(fd >= 0);
 
     if ((v = fcntl(fd, F_GETFL)) < 0)
         return -1;
@@ -149,7 +147,7 @@ error:
         if (filedes[0] >= 0)
                 pa_close(filedes[0]);
         if (filedes[1] >= 0)
-                pa_close(filedes[0]);
+                pa_close(filedes[1]);
 
         return -1;
 }

@@ -18,9 +18,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include <inttypes.h>
@@ -96,7 +94,7 @@ struct pa_sink_input {
 
     pa_sink_input *sync_prev, *sync_next;
 
-    /* Also see http://pulseaudio.org/wiki/InternalVolumes */
+    /* Also see http://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Volumes/ */
     pa_cvolume volume;             /* The volume clients are informed about */
     pa_cvolume reference_ratio;    /* The ratio of the stream's volume to the sink's reference volume */
     pa_cvolume real_ratio;         /* The ratio of the stream's volume to the sink's real volume */
@@ -375,7 +373,6 @@ int pa_sink_input_remove_volume_factor(pa_sink_input *i, const char *key);
 pa_cvolume *pa_sink_input_get_volume(pa_sink_input *i, pa_cvolume *volume, bool absolute);
 
 void pa_sink_input_set_mute(pa_sink_input *i, bool mute, bool save);
-bool pa_sink_input_get_mute(pa_sink_input *i);
 
 void pa_sink_input_update_proplist(pa_sink_input *i, pa_update_mode_t mode, pa_proplist *p);
 
@@ -416,6 +413,19 @@ bool pa_sink_input_safe_to_remove(pa_sink_input *i);
 bool pa_sink_input_process_underrun(pa_sink_input *i);
 
 pa_memchunk* pa_sink_input_get_silence(pa_sink_input *i, pa_memchunk *ret);
+
+/* Called from the main thread, from sink.c only. The normal way to set the
+ * sink input volume is to call pa_sink_input_set_volume(), but the flat volume
+ * logic in sink.c needs also a function that doesn't do all the extra stuff
+ * that pa_sink_input_set_volume() does. This function simply sets i->volume
+ * and fires change notifications. */
+void pa_sink_input_set_volume_direct(pa_sink_input *i, const pa_cvolume *volume);
+
+/* Called from the main thread, from sink.c only. This shouldn't be a public
+ * function, but the flat volume logic in sink.c currently needs a way to
+ * directly set the sink input reference ratio. This function simply sets
+ * i->reference_ratio and logs a message if the value changes. */
+void pa_sink_input_set_reference_ratio(pa_sink_input *i, const pa_cvolume *ratio);
 
 #define pa_sink_input_assert_io_context(s) \
     pa_assert(pa_thread_mq_get() || !PA_SINK_INPUT_IS_LINKED((s)->state))

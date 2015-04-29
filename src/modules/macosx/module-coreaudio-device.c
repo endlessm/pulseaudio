@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 /* TODO:
@@ -678,7 +676,7 @@ static void thread_func(void *userdata) {
                 pa_sink_process_rewind(ca_sink->pa_sink, 0);
         }
 
-        ret = pa_rtpoll_run(u->rtpoll, true);
+        ret = pa_rtpoll_run(u->rtpoll);
 
         if (ret < 0)
             goto fail;

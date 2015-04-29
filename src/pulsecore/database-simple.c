@@ -15,9 +15,7 @@
   Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -322,18 +320,11 @@ int pa_database_set(pa_database *database, const pa_datum *key, const pa_datum* 
 
 int pa_database_unset(pa_database *database, const pa_datum *key) {
     simple_data *db = (simple_data*)database;
-    entry *e;
 
     pa_assert(db);
     pa_assert(key);
 
-    e = pa_hashmap_remove(db->map, key);
-    if (!e)
-        return -1;
-
-    free_entry(e);
-
-    return 0;
+    return pa_hashmap_remove_and_free(db->map, key);
 }
 
 int pa_database_clear(pa_database *database) {

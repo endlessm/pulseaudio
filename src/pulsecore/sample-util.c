@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -296,9 +294,9 @@ void pa_sample_clamp(pa_sample_format_t format, void *dst, size_t dstr, const vo
         for (; n > 0; n--) {
             float f;
 
-            f = PA_FLOAT32_SWAP(*s);
+            f = PA_READ_FLOAT32RE(s);
             f = PA_CLAMP_UNLIKELY(f, -1.0f, 1.0f);
-            *d = PA_FLOAT32_SWAP(f);
+            PA_WRITE_FLOAT32RE(d, f);
 
             s = (const float*) ((const uint8_t*) s + sstr);
             d = (float*) ((uint8_t*) d + dstr);

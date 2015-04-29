@@ -15,9 +15,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -233,8 +231,10 @@ static struct entry* entry_read(struct userdata *u, const char *name) {
 
     pa_zero(data);
 
-    if (!pa_database_get(u->database, &key, &data))
-        goto fail;
+    if (!pa_database_get(u->database, &key, &data)) {
+        pa_log_debug("Database contains no data for key: %s", name);
+        return NULL;
+    }
 
     t = pa_tagstruct_new(data.data, data.size);
     e = entry_new();
@@ -477,7 +477,7 @@ fail:
     }
 #endif
 
-    pa_log_debug("Database contains invalid data for key: %s", name);
+    pa_log_debug("Database contains no (or invalid) data for key: %s", name);
 
     pa_xfree(name);
 
@@ -791,9 +791,10 @@ static pa_hook_result_t sink_fixate_hook_callback(pa_core *c, pa_sink_new_data *
         if (u->restore_muted && e->muted_valid) {
 
             if (!new_data->muted_is_set) {
-                pa_log_info("Restoring mute state for sink %s.", new_data->name);
                 pa_sink_new_data_set_muted(new_data, e->muted);
                 new_data->save_muted = true;
+                pa_log_info("Restoring mute state for sink %s: %smuted", new_data->name,
+                            new_data->muted ? "" : "un");
             } else
                 pa_log_debug("Not restoring mute state for sink %s, because already set.", new_data->name);
         }
@@ -932,9 +933,10 @@ static pa_hook_result_t source_fixate_hook_callback(pa_core *c, pa_source_new_da
         if (u->restore_muted && e->muted_valid) {
 
             if (!new_data->muted_is_set) {
-                pa_log_info("Restoring mute state for source %s.", new_data->name);
                 pa_source_new_data_set_muted(new_data, e->muted);
                 new_data->save_muted = true;
+                pa_log_info("Restoring mute state for source %s: %smuted", new_data->name,
+                            new_data->muted ? "" : "un");
             } else
                 pa_log_debug("Not restoring mute state for source %s, because already set.", new_data->name);
         }
@@ -1019,6 +1021,7 @@ static void read_sink_format_reply(struct userdata *u, pa_tagstruct *reply, pa_s
         PA_IDXSET_FOREACH(f, e->formats, idx) {
             pa_tagstruct_put_format_info(reply, f);
         }
+        perportentry_free(e);
     }
     pa_xfree(name);
 }
@@ -1319,8 +1322,10 @@ void pa__done(pa_module*m) {
     if (u->connection_unlink_hook_slot)
         pa_hook_slot_free(u->connection_unlink_hook_slot);
 
-    if (u->save_time_event)
+    if (u->save_time_event) {
         u->core->mainloop->time_free(u->save_time_event);
+        pa_database_sync(u->database);
+    }
 
     if (u->database)
         pa_database_close(u->database);

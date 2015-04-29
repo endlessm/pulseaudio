@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -66,6 +64,7 @@ struct userdata {
     pa_hook_slot *card_put_hook_slot;
     pa_hook_slot *card_profile_changed_hook_slot;
     pa_hook_slot *card_profile_added_hook_slot;
+    pa_hook_slot *profile_available_changed_hook_slot;
     pa_hook_slot *port_offset_hook_slot;
     pa_time_event *save_time_event;
     pa_database *database;
@@ -269,8 +268,10 @@ static struct entry* entry_read(struct userdata *u, const char *name) {
 
     pa_zero(data);
 
-    if (!pa_database_get(u->database, &key, &data))
-        goto fail;
+    if (!pa_database_get(u->database, &key, &data)) {
+        pa_log_debug("Database contains no data for key: %s", name);
+        return NULL;
+    }
 
     t = pa_tagstruct_new(data.data, data.size);
     e = entry_new();
@@ -410,6 +411,9 @@ static pa_hook_result_t card_profile_added_callback(pa_core *c, pa_card_profile 
 
     pa_assert(profile);
 
+    if (profile->available == PA_AVAILABLE_NO)
+        return PA_HOOK_OK;
+
     if (!(entry = entry_read(u, profile->card->name)))
         return PA_HOOK_OK;
 
@@ -419,6 +423,33 @@ static pa_hook_result_t card_profile_added_callback(pa_core *c, pa_card_profile 
     }
 
     entry_free(entry);
+
+    return PA_HOOK_OK;
+}
+
+static pa_hook_result_t profile_available_changed_callback(void *hook_data, void *call_data, void *userdata) {
+    pa_card_profile *profile = call_data;
+    pa_card *card;
+    struct userdata *u = userdata;
+    struct entry *entry;
+
+    pa_assert(profile);
+    pa_assert(u);
+
+    card = profile->card;
+
+    if (profile->available == PA_AVAILABLE_NO)
+        return PA_HOOK_OK;
+
+    entry = entry_read(u, card->name);
+    if (!entry)
+        return PA_HOOK_OK;
+
+    if (!pa_streq(profile->name, entry->profile))
+        return PA_HOOK_OK;
+
+    pa_log_info("Card %s profile %s became available, activating.", card->name, profile->name);
+    pa_card_set_profile(profile->card, profile, true);
 
     return PA_HOOK_OK;
 }
@@ -509,6 +540,8 @@ int pa__init(pa_module*m) {
     u->card_put_hook_slot = pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_CARD_PUT], PA_HOOK_NORMAL, (pa_hook_cb_t) card_put_hook_callback, u);
     u->card_profile_changed_hook_slot = pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_CARD_PROFILE_CHANGED], PA_HOOK_NORMAL, (pa_hook_cb_t) card_profile_changed_callback, u);
     u->card_profile_added_hook_slot = pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_CARD_PROFILE_ADDED], PA_HOOK_NORMAL, (pa_hook_cb_t) card_profile_added_callback, u);
+    u->profile_available_changed_hook_slot = pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_CARD_PROFILE_AVAILABLE_CHANGED],
+                                                             PA_HOOK_NORMAL, profile_available_changed_callback, u);
     u->port_offset_hook_slot = pa_hook_connect(&m->core->hooks[PA_CORE_HOOK_PORT_LATENCY_OFFSET_CHANGED], PA_HOOK_NORMAL, (pa_hook_cb_t) port_offset_change_callback, u);
     u->hooks_connected = true;
 
@@ -549,6 +582,7 @@ void pa__done(pa_module*m) {
         pa_hook_slot_free(u->card_put_hook_slot);
         pa_hook_slot_free(u->card_profile_changed_hook_slot);
         pa_hook_slot_free(u->card_profile_added_hook_slot);
+        pa_hook_slot_free(u->profile_available_changed_hook_slot);
         pa_hook_slot_free(u->port_offset_hook_slot);
     }
 

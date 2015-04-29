@@ -11,9 +11,7 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with PulseAudio; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-# USA.
+# along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 
 DISTCLEANFILES = \
 	$(noinst_DATA)
@@ -32,7 +30,6 @@ noinst_DATA = \
 	pulse-client.conf.5.xml \
 	default.pa.5.xml \
 	pulse-cli-syntax.5.xml \
-	start-pulseaudio-kde.1.xml \
 	start-pulseaudio-x11.1.xml
 
 xmllint: $(noinst_DATA)
@@ -56,7 +53,6 @@ dist_man_MANS = \
 	pulse-client.conf.5 \
 	default.pa.5 \
 	pulse-cli-syntax.5 \
-	start-pulseaudio-kde.1 \
 	start-pulseaudio-x11.1
 
 CLEANFILES = \
@@ -81,7 +77,6 @@ EXTRA_DIST = \
 	pulse-client.conf.5.xml.in \
 	default.pa.5.xml.in \
 	pulse-cli-syntax.5.xml.in \
-	start-pulseaudio-kde.1.xml.in \
 	start-pulseaudio-x11.1.xml.in \
 	xmltoman \
 	xmltoman.css \

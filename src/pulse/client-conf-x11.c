@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-13071
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -37,14 +35,15 @@
 
 #include "client-conf-x11.h"
 
-int pa_client_conf_from_x11(pa_client_conf *c, const char *dname) {
+int pa_client_conf_from_x11(pa_client_conf *c) {
+    const char *dname;
     xcb_connection_t *xcb = NULL;
     int ret = -1, screen = 0;
     char t[1024];
 
     pa_assert(c);
 
-    if (!dname && !(dname = getenv("DISPLAY")))
+    if (!(dname = getenv("DISPLAY")))
         goto finish;
 
     if (*dname == 0)
@@ -91,10 +90,12 @@ int pa_client_conf_from_x11(pa_client_conf *c, const char *dname) {
     }
 
     if (pa_x11_get_prop(xcb, screen, "PULSE_COOKIE", t, sizeof(t))) {
-        if (pa_client_conf_load_cookie_from_hex(c, t) < 0) {
+        if (pa_parsehex(t, c->cookie_from_x11, sizeof(c->cookie_from_x11)) != sizeof(c->cookie_from_x11)) {
             pa_log(_("Failed to parse cookie data"));
             goto finish;
         }
+
+        c->cookie_from_x11_valid = true;
     }
 
     ret = 0;

@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -287,7 +285,8 @@ int pa_memblockq_push(pa_memblockq* bq, const pa_memchunk *uchunk) {
     pa_assert(uchunk->length > 0);
     pa_assert(uchunk->index + uchunk->length <= pa_memblock_get_length(uchunk->memblock));
 
-    pa_assert_se(uchunk->length % bq->base == 0);
+    pa_assert(uchunk->length % bq->base == 0);
+    pa_assert(uchunk->index % bq->base == 0);
 
     if (!can_push(bq, uchunk->length))
         return -1;

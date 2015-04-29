@@ -14,9 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with PulseAudio; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+  License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #ifdef HAVE_CONFIG_H
@@ -54,6 +52,7 @@ START_TEST (sigbus_test) {
     /* Verify memory map */
     pa_log("Let's see if this worked: %s", (char*) p);
     pa_log("And memtrap says it is good: %s", pa_yes_no(pa_memtrap_is_good(m)));
+    fail_unless(pa_memtrap_is_good(m) == true);
 
     /* Invalidate mapping */
     fail_unless(ftruncate(fd, 0) >= 0);
@@ -64,6 +63,7 @@ START_TEST (sigbus_test) {
     /* Verify memory map */
     pa_log("Let's see if this worked: %s", (char*) p);
     pa_log("And memtrap says it is good: %s", pa_yes_no(pa_memtrap_is_good(m)));
+    fail_unless(pa_memtrap_is_good(m) == false);
 
     pa_memtrap_remove(m);
     munmap(p, PA_PAGE_SIZE);
