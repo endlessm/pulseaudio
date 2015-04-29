@@ -2171,7 +2171,7 @@ installlibLTLIBRARIES = install-libLTLIBRARIES
 $(installlibLTLIBRARIES): install-pkglibLTLIBRARIES
 
 installmodlibexecLTLIBRARIES = install-modlibexecLTLIBRARIES
-$(installmodlibexecLTLIBRARIES): install-pkglibLTLIBRARIES install-libLTLIBRARIES
+$(installmodlibexecLTLIBRARIES): install-pkglibLTLIBRARIES
 
 installpadsplibLTLIBRARIES = install-padsplibLTLIBRARIES
 $(installpadsplibLTLIBRARIES): install-libLTLIBRARIES
