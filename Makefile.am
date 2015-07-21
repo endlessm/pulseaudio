@@ -113,4 +113,4 @@ $(top_srcdir)/.version:
 DISTCLEANFILES = \
         po/.intltool-merge-cache
 
-DISTCHECK_CONFIGURE_FLAGS = --with-udev-rules-dir="$$dc_install_base/lib/udev/rules.d"
+AM_DISTCHECK_CONFIGURE_FLAGS = --with-udev-rules-dir="$$dc_install_base/lib/udev/rules.d"
