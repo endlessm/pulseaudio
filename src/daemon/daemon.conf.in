@@ -58,7 +58,7 @@ ifelse(@HAVE_DBUS@, 1, [dnl
 ; enable-remixing = yes
 ; enable-lfe-remixing = no
 
-; flat-volumes = yes
+; flat-volumes = no
 
 ifelse(@HAVE_SYS_RESOURCE_H@, 1, [dnl
 ; rlimit-fsize = -1
