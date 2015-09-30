@@ -67,7 +67,7 @@ static int try_to_switch_profile(pa_card *card, pa_device_port *port) {
     /* We don't want to switch to another profile automatically if the currently
        active profile has a higher priority than whatever profile would be selected
        in the loop below, but only if it contains at least one available port */
-    if (pa_card_profile_contains_available_ports(card->active_profile, port->direction))
+    if (pa_card_profile_contains_type_ports(card->active_profile, port->direction, PA_AVAILABLE_YES))
         best_profile = card->active_profile;
 
     PA_HASHMAP_FOREACH(profile, port->profiles, state) {
