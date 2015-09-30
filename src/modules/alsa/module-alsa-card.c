@@ -719,11 +719,24 @@ static pa_card_profile *find_best_profile_with_available_ports(pa_card *card, pa
         if (profile->available == PA_AVAILABLE_NO)
             continue;
 
-        if (!pa_card_profile_contains_available_ports(profile, direction))
+        if (!pa_card_profile_contains_type_ports(profile, direction, PA_AVAILABLE_YES))
             continue;
 
         if (!best_profile || profile->priority > best_profile->priority)
             best_profile = profile;
+    }
+
+    if (!best_profile) {
+        PA_HASHMAP_FOREACH(profile, card->profiles, state) {
+            if (profile->available == PA_AVAILABLE_NO)
+                continue;
+
+            if (!pa_card_profile_contains_type_ports(profile, direction, PA_AVAILABLE_UNKNOWN))
+                continue;
+
+            if (!best_profile || profile->priority > best_profile->priority)
+                best_profile = profile;
+        }
     }
 
     return best_profile;
@@ -737,7 +750,7 @@ static void switch_to_alternative_profile_if_needed(pa_card *card) {
     /* We are only interested in output ports as those are the ones that will
        define whether we want to switch or not to another profile, since we should
        have a way to play audio right from the start, if there's port for that */
-    if (pa_card_profile_contains_available_ports(card->active_profile, PA_DIRECTION_OUTPUT))
+    if (pa_card_profile_contains_type_ports(card->active_profile, PA_DIRECTION_OUTPUT, PA_AVAILABLE_YES))
         return;
 
     /* Try to avoid situations where we could settle on a profile when
