@@ -1,0 +1,3 @@
+# These patches were applied to our git directly
+#Fix-detection-of-online-CPUs-in-pa_ncpus.patch
+#raop-add-compatibility-with-openssl-1.1.0.patch

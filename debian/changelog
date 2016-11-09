@@ -1,23 +1,220 @@
-pulseaudio (1:6.0) eos; urgency=low
+pulseaudio (9.0-5) unstable; urgency=medium
 
-  * debian/rules:
-    + Disable bluez4 plugin, since we don't ship it, and force-enable
-      bluez5 integration.
-  * debian/changelog:
-    + Add back the epoch, since we're based on the Ubuntu package that has
-      it. This allows for smoother apt updates.
-  * Downstream patches still ported from our 5.0 release:
-    + "Exit PA with X session closing when PA is started by the session"
-    + "Fix switching between HDMI and headphones automatically"
-    + "module-alsa-card: Switch profiles if needed after initializing the card"
-    + "card: Extract profile_contains_available_ports() from module_alsa_card to card"
-    + "module-switch-on-port-available: Consider current profile before switching to a new one"
-    + "card: Consider direction when checking whether a card profile has ports available"
-    + "build: try to fix build on Jenkins"
+  [ Felipe Sateler ]
+  * Remove unnecessary compression=xz dpkg source option
+  * Reformat patches for use with gbp-pq
+  * Backport upstream patch for building with openssl 1.1 (Closes: #828515)
 
-  [endlessm/shell#4595]
+  [ Adam Conrad ]
+  * Bumping packages off the system requires Conflicts/Replaces, not Breaks.
 
- -- Mario Sanchez Prada <mario@endlessm.com>  Wed, 29 Apr 2015 18:14:35 +0100
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 04 Nov 2016 19:18:11 -0300
+
+pulseaudio (9.0-4) unstable; urgency=medium
+
+  * Generate shlibs.local file on build, to avoid hardcoding
+    on each new upstream version
+  * Enable hardening flags
+  * Fix build on nonlinux archs
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 09 Oct 2016 13:23:58 -0300
+
+pulseaudio (9.0-3) unstable; urgency=medium
+
+  [ Willem Mulder ]
+  * Split equalizer sink module into its own package (Closes: #794650)
+
+  [ Felipe Sateler ]
+  * Switch from CDBS to short-form dh
+  * Use upstream-provided pamon,parec,parecord links instead of creating our own
+  * Now that we ship everything upstream ships, enable --fail-missing
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 28 Aug 2016 13:15:28 -0300
+
+pulseaudio (9.0-2) unstable; urgency=medium
+
+  * Merge module-udev-detect back into main package.
+    Closes: #831518, #831355
+  * Demote udev Depends to Suggests.
+    Turns out libudev does not error out when udev is not available,
+    instead it just does nothing.
+  * Merge pulseaudio-module-x11 back into main package.
+    Split is not very useful, as main pulseaudio package
+    already depends on X libs. Therefore, only 56Kb are added
+    to the main package.
+    Closes: #833011
+  * Drop versioned breaks against ancient libltdl version
+  * Drop versioned breaks against avahi-daemon version older than jessie
+  * libpulsedsp: drop versioned breaks against ancient pulseaudio-utils
+    version
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 12 Aug 2016 22:40:38 -0400
+
+pulseaudio (9.0-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Add 0001-Fix_detection_of_online_CPUs.patch to fix pa_ncpus()
+    on systems with dynamic CPU configurations. Closes: #829618
+
+ -- John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>  Mon, 04 Jul 2016 23:11:29 +0200
+
+pulseaudio (9.0-1) unstable; urgency=medium
+
+  [ Luke Yelavich ]
+  * New upstream release
+  * Update shlibs file
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 03 Jul 2016 12:00:25 -0400
+
+pulseaudio (8.99.1-1) experimental; urgency=medium
+
+  * New upstream release candidate
+    - Closes: #813423
+    - Drop patches, applied upstream
+  * Bump dependency on libwebrtc-audio-processing to >= 0.2
+
+ -- Felipe Sateler <fsateler@debian.org>  Sat, 14 May 2016 15:16:09 -0300
+
+pulseaudio (8.0-3) experimental; urgency=medium
+
+  * Split module-udev-detect into a separate package
+
+ -- Felipe Sateler <fsateler@debian.org>  Thu, 21 Apr 2016 23:59:41 -0300
+
+pulseaudio (8.0-2) unstable; urgency=medium
+
+  * Add patch from upstream to switch back to HDMI when port is back.
+    (Closes: #816963)
+  * Bump standards-version (no changes needed)
+  * Use canonical Vcs-* urls
+    - Use cgit url for browser
+    - Use https url for git
+  * Drop XS-Testsuite header.
+    - Newer dpkg-dev adds the field automatically
+    - Add versioned Build-Depends for such a version (1.17.14)
+  * Fix Build-Profile stage1 support
+    - Mark libbluetooth-dev dependency as <!stage1>
+    - Mark pulseaudio-module-bluetooth as <!stage1>
+    - Build-depend on new enough debhelper (9.20141010)
+    - Use correct flag --disable-bluez5
+    - Drop manual ignoring of bluetooth packages, debhelper knows to do so
+
+ -- Felipe Sateler <fsateler@debian.org>  Sat, 02 Apr 2016 20:42:36 -0300
+
+pulseaudio (8.0-1) unstable; urgency=medium
+
+  [ Luke Yelavich ]
+  * New upstream release
+  * Update shlibs file
+
+  [ Felipe Sateler ]
+  * Release to unstable
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 27 Jan 2016 20:44:59 -0300
+
+pulseaudio (7.99.2-1) experimental; urgency=medium
+
+  * New upstream release candidate
+  * Drop build-sys-Fix-install-order-of-libpulsecore.patch, applied
+    upstream
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 15 Jan 2016 18:21:14 -0300
+
+pulseaudio (7.99.1-1) experimental; urgency=medium
+
+  * New upstream release candidate
+    - Update local shlibs file for 7.99
+    - libpulsecore is now installed in the package-private directory
+    - Update symbols file to add new balance functions
+  * Drop pulsecore related lintian overrides
+  * Drop stale pulseaudio-dev.install file
+  * Drop stale lintian overrides
+  * Add patch to fix install order of libpulsecore
+
+ -- Felipe Sateler <fsateler@debian.org>  Mon, 28 Dec 2015 17:34:22 -0300
+
+pulseaudio (7.1-2) unstable; urgency=medium
+
+  * Add build-depends on libsoxr-dev to enable soxr resamplers.
+     Closes: #804212
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 06 Nov 2015 17:15:54 -0300
+
+pulseaudio (7.1-1) unstable; urgency=medium
+
+  * New upstream version
+  * Update shlibs file for 7.1
+  * Silence lintian warning about pulsecore: it is internal library
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 01 Nov 2015 16:27:53 -0300
+
+pulseaudio (7.0-1) unstable; urgency=medium
+
+  [ Luke Yelavich ]
+  * New upstream release
+  * Dropped patch, applied upstream
+  * Update shlibs file for 7.0
+
+  [ Felipe Sateler ]
+  * Update bash completion lintian override
+  * Upload to unstable
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 25 Sep 2015 09:53:54 -0300
+
+pulseaudio (6.99.1-2) experimental; urgency=medium
+
+  * Fix test suite failure on alpha. Patch from Michael Cree. 
+    Closes: #798248
+
+ -- Felipe Sateler <fsateler@debian.org>  Thu, 10 Sep 2015 20:44:53 -0300
+
+pulseaudio (6.99.1-1) experimental; urgency=medium
+
+  * New upstream release candidate
+     - Drop 0001-core-util-pactl-Make-one-localised-and-one-non-
+       local.patch, was picked from upstream
+  * Change the bash completion install dir to /usr/share
+
+ -- Felipe Sateler <fsateler@debian.org>  Thu, 03 Sep 2015 23:29:12 -0300
+
+pulseaudio (6.0-5) unstable; urgency=medium
+
+  * Module udev detect is linux-only, so don't install on !linux.
+
+ -- Felipe Sateler <fsateler@debian.org>  Mon, 03 Aug 2015 14:29:09 -0300
+
+pulseaudio (6.0-4) unstable; urgency=medium
+
+  * Specify systemd user unit dir explicitly.
+    The pkgconfig file lives in package systemd, which we don't want to
+    build-depend on.
+
+ -- Felipe Sateler <fsateler@debian.org>  Mon, 03 Aug 2015 10:17:23 -0300
+
+pulseaudio (6.0-3) unstable; urgency=medium
+
+  * Do not build bluez4 module, it is no longer available.
+    Closes: #788293
+  * Pass --disable-hal-compat to configure instead of building a module we do
+    not install
+  * Use dh-exec instead of manual .install mangling
+  * Do not use dh_installman to install manpages, upstream already installs
+    them correctly.
+  * libpulse-dev: drop Depends on libavahi-client-dev
+  * debian/rules: use DEB_DH_INSTALL_SOURCEDIR instead of deprecated DEB_DH_INSTALL_ARGS
+  * Install (but not enable) systemd user units on linux archs.
+    Closes: #794226
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 31 Jul 2015 19:53:59 -0300
+
+pulseaudio (6.0-2) unstable; urgency=medium
+
+  * Pick upstream patch that creates a localised version of pa_yes_no
+    - This fixes a problem when that function was used to create module
+      loading arguments.
+  * Upload to unstable
+
+ -- Felipe Sateler <fsateler@debian.org>  Mon, 27 Apr 2015 11:17:20 -0300
 
 pulseaudio (6.0-1) experimental; urgency=medium
 
@@ -188,7 +385,7 @@ pulseaudio (5.0-3) unstable; urgency=medium
     - bash completion is not meant to be executable
     - neither are the pulseaudio configuration files
   * Do not start pulseaudio in X session if it was already started.
-     Closes: #743813
+     Closes: #743813 
   * Remove pulseaudio init script, place it under examples.
      Closes: #696842
   * debian/patches/only-autostart-kde-version.patch:
@@ -209,80 +406,6 @@ pulseaudio (5.0-3) unstable; urgency=medium
      Closes: #749333
 
  -- Felipe Sateler <fsateler@debian.org>  Sat, 26 Jul 2014 01:02:03 -0400
-
-pulseaudio (1:5.0-2endless7) eos; urgency=low
-
-  * debian/patches/endless-Consider-direction-when-checking-whether-a-card-prof.patch:
-    - We need to consider the direction of the port we are trying to switch to, not
-      to stick to the current profile when the only available port has other direction.
-  [endlessm/shell#4203]
-
- -- Mario Sanchez Prada <mario@endlessm.com>  Thu, 08 Jan 2015 23:04:16 +0000
-
-pulseaudio (1:5.0-2endless6) eos; urgency=low
-
-  * debian/patches/endless-Extract-profile_contains_available_ports-from-module.patch:
-    - The logic of profile_contains_available_ports() will be used from
-      module-switch-on-port-available, so extract it from module-alsa-card.
-  * debian/patches/endless-Don-t-switch-to-a-newly-available-port-if-the-curren.patch:
-    - Don't want switch to another profile automatically if the currently active
-      profile has available ports AND a higher priority than the new one
-  [endlessm/shell#4368]
-
- -- Mario Sanchez Prada <mario@endlessm.com>  Wed, 07 Jan 2015 14:37:34 +0000
-
-pulseaudio (1:5.0-2endless5) eos; urgency=low
-
-  * debian/patches/endless-Fix-path-subset-detection.patch:
-    - Fixes a bug in the calculation of the ALSA patch, which would lead to
-      the wrong device port being selected if it's a subset or the right one.
-  * debian/patches/endless-Ignore-some-elements-in-the-analog-output-path.patch:
-    - Supress the analog-output path when there are more specific paths available
-  [endlessm/shell#4203]
-
- -- Mario Sanchez Prada <mario@endlessm.com>  Fri, 12 Dec 2014 16:26:11 +0000
-
-pulseaudio (1:5.0-2endless4) eos; urgency=low
-
-  * debian/patches/endless-Switch-profiles-if-needed-after-initializing-the-ALS.patch:
-    - If the profile selected on start does not contain an available port, try
-      to switch to the best alternative one containing available ports, if any.
-  [endlessm/shell#2331]
-
- -- Mario Sanchez Prada <mario@endlessm.com>  Fri, 05 Dec 2014 01:36:38 +0000
-
-pulseaudio (1:5.0-2endless3) eos; urgency=low
-
-  * debian/patches/endless-fix-switching-between-HDMI-and-headphones.patch:
-    - Do not avoid switching to a newly available port if there's another one
-      still available (e.g. HDMI), so we switch to headphones when plugging them.
-    - Switch back to the best available port in the card when the active one
-      becomes unavailable (e.g. back to HDMI when unplugging the headphones).
-  * debian/patches/endless-Module-switch-on-port-available-Don-t-switch-profile.patch:
-    - Don't switch profiles on uninitialized cards, as it could cause the HDMI
-      port to become the default on systems where analog output was available.
-  [endlessm/shell#2331]
-
- -- Mario Sanchez Prada <mario@endlessm.com>  Tue, 02 Dec 2014 15:35:44 +0000
-
-pulseaudio (1:5.0-2endless2) eos; urgency=low
-
-  * debian/patches/endless-Initialize-port-before-fixate-hook.patch:
-    - sink/source: Initialize port before fixate hook (fixes volume/mute not saved)
-  [endlessm/shell#3823]
-
- -- Mario Sanchez Prada <mario@endlessm.com>  Fri, 14 Nov 2014 15:07:22 +0000
-
-pulseaudio (1:5.0-2endless1) unstable; urgency=low
-
-  * debian/rules:
-    Disable bluez4 plugin, since we don't ship it, and force-enable
-    bluez5 integration.
-  * debian/changelog:
-    Add back the epoch, since we're based on the Ubuntu package that has
-    it. This allows for smoother apt updates.
-
- -- Cosimo Cecchi <cosimo@endlessm.com>  Wed, 16 Apr 2014 13:08:03 -0700
 
 pulseaudio (5.0-2) unstable; urgency=low
 
@@ -524,7 +647,7 @@ pulseaudio (2.0-2) unstable; urgency=low
     - LSB: NetworkManager to network-manager.
     - LSB: added missing Stop levels 0 and 6.
     - Added --disallow-exit option (Closes: #671470).
-  * pulseaudio-esound-compat.links: added man page link for esd.1.gz
+  * pulseaudio-esound-compat.links: added man page link for esd.1.gz 
   * watch: updated to point to FreeDesktop.org XZ tarball archive.
 
  -- Sjoerd Simons <sjoerd@debian.org>  Fri, 18 May 2012 20:54:08 +0200
@@ -1384,3 +1507,4 @@ pulseaudio (0.9.5-1) unstable; urgency=low
   * Initial release (Closes: #378626)
 
  -- CJ van den Berg <cj@vdbonline.com>  Mon, 28 Aug 2006 00:31:10 +0200
+
