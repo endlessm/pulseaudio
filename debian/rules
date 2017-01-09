@@ -6,6 +6,10 @@ DEB_LDFLAGS_MAINT_APPEND = -Wl,--no-as-needed
 
 DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
+# Strip the "+devN.commit_id" info from DEB_VERSION_UPSTREAM to get the real
+# upstream version
+VERSION_UPSTREAM = $(shell echo $(DEB_VERSION_UPSTREAM) | cut -d '+' -f1)
+
 include /usr/share/dpkg/default.mk
 
 export AUTOPOINT=intltoolize --automake --copy
@@ -18,7 +22,7 @@ export CK_TIMEOUT_MULTIPLIER = 0
 # normal directory as pulseaudio is foreign
 DEB_CONFIGURE_EXTRA_FLAGS = --enable-x11 --disable-hal-compat \
   --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
-  --with-module-dir=\$${prefix}/lib/pulse-$(DEB_VERSION_UPSTREAM)/modules \
+  --with-module-dir=\$${prefix}/lib/pulse-$(VERSION_UPSTREAM)/modules \
   --with-zsh-completion-dir=\$${datadir}/zsh/vendor-completions \
   --with-bash-completion-dir=\$${datadir}/bash-completion/completions \
   --with-systemduserunitdir=\$${prefix}/lib/systemd/user \
@@ -49,8 +53,8 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 endif
 
 override_dh_makeshlibs:
-	sed 's/DEB_VERSION_UPSTREAM/$(DEB_VERSION_UPSTREAM)/' debian/shlibs.local.in > debian/shlibs.local
-	dh_makeshlibs --exclude=usr/lib/pulse-$(DEB_VERSION_UPSTREAM)/modules \
+	sed 's/VERSION_UPSTREAM/$(VERSION_UPSTREAM)/' debian/shlibs.local.in > debian/shlibs.local
+	dh_makeshlibs --exclude=usr/lib/pulse-$(VERSION_UPSTREAM)/modules \
 		--exclude=usr/lib/$(DEB_HOST_MULTIARCH)/pulseaudio
 
 override_dh_shlibdeps:

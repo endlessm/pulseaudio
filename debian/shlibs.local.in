@@ -1,2 +1,2 @@
-libpulsecommon DEB_VERSION_UPSTREAM libpulse0 (= ${binary:Version})
-libpulsecore DEB_VERSION_UPSTREAM pulseaudio (= ${binary:Version})
+libpulsecommon VERSION_UPSTREAM libpulse0 (= ${binary:Version})
+libpulsecore VERSION_UPSTREAM pulseaudio (= ${binary:Version})
