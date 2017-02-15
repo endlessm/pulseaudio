@@ -1,3 +1,13 @@
+pulseaudio (1:9.0-5) unstable; urgency=medium
+
+  * Bump the epoch.
+    We have been carrying the epoch of 1 in our version because we used to be
+    based on Ubuntu's package, which has an epoch of 1.
+
+    https://phabricator.endlessm.com/T14580
+
+ -- João Paulo Rechi Vita <jprvita@endlessm.com>  Wed, 15 Feb 2017 13:40:57 -0500
+
 pulseaudio (9.0-5) unstable; urgency=medium
 
   [ Felipe Sateler ]
