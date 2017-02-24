@@ -1,2 +1,2 @@
-libpulsecommon VERSION_UPSTREAM libpulse0 (= ${binary:Version})
-libpulsecore VERSION_UPSTREAM pulseaudio (= ${binary:Version})
+libpulsecommon PA_MAJORMINOR libpulse0 (= ${binary:Version})
+libpulsecore PA_MAJORMINOR pulseaudio (= ${binary:Version})

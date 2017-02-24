@@ -1,12 +1,21 @@
-pulseaudio (1:9.0-5) unstable; urgency=medium
+pulseaudio (10.0-1) unstable; urgency=medium
 
-  * Bump the epoch.
-    We have been carrying the epoch of 1 in our version because we used to be
-    based on Ubuntu's package, which has an epoch of 1.
+  * New upstream release
+    - Memfd is enabled by default. This unbreaks using pa within firejail or
+      similar. (Closes: #804120)
+  * Document qpaeq AGPL license
 
-    https://phabricator.endlessm.com/T14580
+ -- Felipe Sateler <fsateler@debian.org>  Thu, 19 Jan 2017 20:49:55 -0300
 
- -- João Paulo Rechi Vita <jprvita@endlessm.com>  Wed, 15 Feb 2017 13:40:57 -0500
+pulseaudio (9.99.1-1) experimental; urgency=medium
+
+  * New upstream release candidate
+    - Drop all patches, applied upstream
+    - Install new allow-passthrough module
+  * shlibs.local: only the major and minor version
+    elements are used for the internal library SONAMEs
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 04 Jan 2017 15:43:30 -0300
 
 pulseaudio (9.0-5) unstable; urgency=medium
 
