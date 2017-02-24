@@ -1,3 +1,13 @@
+pulseaudio (1:10.0-1endless1) master; urgency=medium
+
+  * Bump the epoch.
+    We have been carrying the epoch of 1 in our version because we used to be
+    based on Ubuntu's package, which has an epoch of 1.
+
+    https://phabricator.endlessm.com/T14580
+
+ -- João Paulo Rechi Vita <jprvita@endlessm.com>  Fri, 24 Feb 2017 10:48:44 -0500
+
 pulseaudio (10.0-1) unstable; urgency=medium
 
   * New upstream release
