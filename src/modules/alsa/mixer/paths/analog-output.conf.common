@@ -173,14 +173,14 @@ switch = off
 [Element Analog Output]
 enumeration = select
 
-[Option Analog Output:Speakers]
-name = output-speaker
-priority = 10
-
 [Option Analog Output:Headphones]
 name = output-headphones
-priority = 9
+priority = 10
 
 [Option Analog Output:FP Headphones]
 name = output-headphones
-priority = 8
+priority = 9
+
+[Option Analog Output:Speakers]
+name = output-speaker
+priority = 7
