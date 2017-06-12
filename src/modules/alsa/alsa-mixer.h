@@ -275,6 +275,18 @@ struct pa_alsa_mapping {
     bool exact_channels:1;
     bool fallback:1;
 
+    /* Should we try to figure out which hw device this mapping is using? HDMI
+     * jack detection and ELD handling requires us to know the underlying hw
+     * device. This defaults to false, because we only need this for HDMI, and
+     * it's not always possible to figure out the hw device (for example, a
+     * surround device might consist of several stereo hw devices). */
+    bool query_hw_device;
+
+    /* The "y" in "hw:x,y". This is set to -1 before the device index has been
+     * queried, or if the query failed. If query_hw_device is false, this is
+     * always -1. */
+    int hw_device_index;
+
     /* Temporarily used during probing */
     snd_pcm_t *input_pcm;
     snd_pcm_t *output_pcm;
