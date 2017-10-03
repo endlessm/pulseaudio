@@ -1812,11 +1812,30 @@ static int element_probe(pa_alsa_element *e, snd_mixer_t *m) {
     return 0;
 }
 
-static int jack_probe(pa_alsa_jack *j, snd_mixer_t *m) {
+static int jack_probe(pa_alsa_jack *j, pa_alsa_mapping *mapping, snd_mixer_t *m) {
     bool has_control;
 
     pa_assert(j);
     pa_assert(j->path);
+
+    if (j->append_pcm_to_name) {
+        char *new_name;
+
+        if (!mapping) {
+            /* This could also be an assertion, because this should never
+             * happen. At the time of writing, mapping can only be NULL when
+             * module-alsa-sink/source synthesizes a path, and those
+             * synthesized paths never have any jacks, so jack_probe() should
+             * never be called with a NULL mapping. */
+            pa_log("Jack %s: append_pcm_to_name is set, but mapping is NULL. Can't use this jack.", j->name);
+            return -1;
+        }
+
+        new_name = pa_sprintf_malloc("%s,pcm=%i Jack", j->name, mapping->hw_device_index);
+        pa_xfree(j->alsa_name);
+        j->alsa_name = new_name;
+        j->append_pcm_to_name = false;
+    }
 
     has_control = pa_alsa_mixer_find(m, j->alsa_name, 0) != NULL;
     pa_alsa_jack_set_has_control(j, has_control);
@@ -2030,6 +2049,28 @@ static int element_parse_enumeration(pa_config_parser_state *state) {
     }
 
     return 0;
+}
+
+static int parse_eld_device(pa_config_parser_state *state) {
+    pa_alsa_path *path;
+    uint32_t eld_device;
+
+    path = state->userdata;
+
+    if (pa_atou(state->rvalue, &eld_device) >= 0) {
+        path->autodetect_eld_device = false;
+        path->eld_device = eld_device;
+        return 0;
+    }
+
+    if (pa_streq(state->rvalue, "auto")) {
+        path->autodetect_eld_device = true;
+        path->eld_device = -1;
+        return 0;
+    }
+
+    pa_log("[%s:%u] Invalid value for option 'eld-device': %s", state->filename, state->lineno, state->rvalue);
+    return -1;
 }
 
 static int option_parse_priority(pa_config_parser_state *state) {
@@ -2326,6 +2367,30 @@ static int jack_parse_state(pa_config_parser_state *state) {
     return 0;
 }
 
+static int jack_parse_append_pcm_to_name(pa_config_parser_state *state) {
+    pa_alsa_path *path;
+    pa_alsa_jack *jack;
+    int b;
+
+    pa_assert(state);
+
+    path = state->userdata;
+    if (!(jack = jack_get(path, state->section))) {
+        pa_log("[%s:%u] Option 'append_pcm_to_name' not expected in section '%s'",
+               state->filename, state->lineno, state->section);
+        return -1;
+    }
+
+    b = pa_parse_boolean(state->rvalue);
+    if (b < 0) {
+        pa_log("[%s:%u] Invalid value for 'append_pcm_to_name': %s", state->filename, state->lineno, state->rvalue);
+        return -1;
+    }
+
+    jack->append_pcm_to_name = b;
+    return 0;
+}
+
 static int element_set_option(pa_alsa_element *e, snd_mixer_t *m, int alsa_idx) {
     snd_mixer_selem_id_t *sid;
     snd_mixer_elem_t *me;
@@ -2524,7 +2589,7 @@ pa_alsa_path* pa_alsa_path_new(const char *paths_dir, const char *fname, pa_alsa
         { "description-key",     pa_config_parse_string,            NULL, "General" },
         { "description",         pa_config_parse_string,            NULL, "General" },
         { "mute-during-activation", pa_config_parse_bool,           NULL, "General" },
-        { "eld-device",          pa_config_parse_int,               NULL, "General" },
+        { "eld-device",          parse_eld_device,                  NULL, "General" },
 
         /* [Option ...] */
         { "priority",            option_parse_priority,             NULL, NULL },
@@ -2533,6 +2598,7 @@ pa_alsa_path* pa_alsa_path_new(const char *paths_dir, const char *fname, pa_alsa
         /* [Jack ...] */
         { "state.plugged",       jack_parse_state,                  NULL, NULL },
         { "state.unplugged",     jack_parse_state,                  NULL, NULL },
+        { "append-pcm-to-name",  jack_parse_append_pcm_to_name,     NULL, NULL },
 
         /* [Element ...] */
         { "switch",              element_parse_switch,              NULL, NULL },
@@ -2563,7 +2629,6 @@ pa_alsa_path* pa_alsa_path_new(const char *paths_dir, const char *fname, pa_alsa
     items[1].data = &p->description_key;
     items[2].data = &p->description;
     items[3].data = &mute_during_activation;
-    items[4].data = &p->eld_device;
 
     if (!paths_dir)
         paths_dir = get_default_paths_dir();
@@ -2745,7 +2810,7 @@ static void path_create_settings(pa_alsa_path *p) {
     element_create_settings(p->elements, NULL);
 }
 
-int pa_alsa_path_probe(pa_alsa_path *p, snd_mixer_t *m, bool ignore_dB) {
+int pa_alsa_path_probe(pa_alsa_path *p, pa_alsa_mapping *mapping, snd_mixer_t *m, bool ignore_dB) {
     pa_alsa_element *e;
     pa_alsa_jack *j;
     double min_dB[PA_CHANNEL_POSITION_MAX], max_dB[PA_CHANNEL_POSITION_MAX];
@@ -2765,7 +2830,7 @@ int pa_alsa_path_probe(pa_alsa_path *p, snd_mixer_t *m, bool ignore_dB) {
     pa_log_debug("Probing path '%s'", p->name);
 
     PA_LLIST_FOREACH(j, p->jacks) {
-        if (jack_probe(j, m) < 0) {
+        if (jack_probe(j, mapping, m) < 0) {
             p->supported = false;
             pa_log_debug("Probe of jack '%s' failed.", j->alsa_name);
             return -1;
@@ -3504,6 +3569,7 @@ pa_alsa_mapping *pa_alsa_mapping_get(pa_alsa_profile_set *ps, const char *name) 
     pa_sample_spec_init(&m->sample_spec);
     pa_channel_map_init(&m->channel_map);
     m->proplist = pa_proplist_new();
+    m->hw_device_index = -1;
 
     pa_hashmap_put(ps->mappings, m->name, m);
 
@@ -3637,6 +3703,31 @@ static int mapping_parse_exact_channels(pa_config_parser_state *state) {
     }
 
     m->exact_channels = b;
+
+    return 0;
+}
+
+static int mapping_parse_query_hw_device(pa_config_parser_state *state) {
+    pa_alsa_profile_set *ps;
+    pa_alsa_mapping *m;
+    int b;
+
+    pa_assert(state);
+
+    ps = state->userdata;
+
+    if (!(m = pa_alsa_mapping_get(ps, state->section))) {
+        pa_log("[%s:%u] Option '%s' not expected in section '%s'",
+               state->filename, state->lineno, state->lvalue, state->section);
+        return -1;
+    }
+
+    if ((b = pa_parse_boolean(state->rvalue)) < 0) {
+        pa_log("[%s:%u] %s has invalid value '%s'", state->filename, state->lineno, state->lvalue, state->section);
+        return -1;
+    }
+
+    m->query_hw_device = b;
 
     return 0;
 }
@@ -3966,9 +4057,11 @@ static void mapping_paths_probe(pa_alsa_mapping *m, pa_alsa_profile *profile,
     }
 
     PA_HASHMAP_FOREACH(p, ps->paths, state) {
-        if (pa_alsa_path_probe(p, mixer_handle, m->profile_set->ignore_dB) < 0) {
+        if (p->autodetect_eld_device)
+            p->eld_device = m->hw_device_index;
+
+        if (pa_alsa_path_probe(p, m, mixer_handle, m->profile_set->ignore_dB) < 0)
             pa_hashmap_remove(ps->paths, p);
-        }
     }
 
     path_set_condense(ps, mixer_handle);
@@ -4015,7 +4108,8 @@ static int mapping_verify(pa_alsa_mapping *m, const pa_channel_map *bonus) {
         { "iec958-ac3-surround-51", N_("Digital Surround 5.1 (IEC958/AC3)") },
         { "iec958-dts-surround-51", N_("Digital Surround 5.1 (IEC958/DTS)") },
         { "hdmi-stereo",            N_("Digital Stereo (HDMI)") },
-        { "hdmi-surround-51",       N_("Digital Surround 5.1 (HDMI)") }
+        { "hdmi-surround-51",       N_("Digital Surround 5.1 (HDMI)") },
+        { "unknown-stereo",         N_("Stereo") },
     };
 
     pa_assert(m);
@@ -4152,6 +4246,7 @@ static int profile_verify(pa_alsa_profile *p) {
         { "output:analog-stereo+input:analog-stereo", N_("Analog Stereo Duplex") },
         { "output:iec958-stereo+input:iec958-stereo", N_("Digital Stereo Duplex (IEC958)") },
         { "output:multichannel-output+input:multichannel-input", N_("Multichannel Duplex") },
+        { "output:unknown-stereo+input:unknown-stereo", N_("Stereo Duplex") },
         { "off",                                      N_("Off") }
     };
 
@@ -4355,6 +4450,7 @@ pa_alsa_profile_set* pa_alsa_profile_set_new(const char *fname, const pa_channel
         { "element-output",         mapping_parse_element,        NULL, NULL },
         { "direction",              mapping_parse_direction,      NULL, NULL },
         { "exact-channels",         mapping_parse_exact_channels, NULL, NULL },
+        { "query-hw-device",        mapping_parse_query_hw_device,NULL, NULL },
 
         /* Shared by [Mapping ...] and [Profile ...] */
         { "description",            mapping_parse_description,    NULL, NULL },
@@ -4529,6 +4625,24 @@ static int add_profiles_to_probe(
     return i;
 }
 
+static int mapping_query_hw_device(pa_alsa_mapping *mapping, snd_pcm_t *pcm) {
+    int r;
+    snd_pcm_info_t* pcm_info;
+    snd_pcm_info_alloca(&pcm_info);
+
+    pa_assert(mapping->query_hw_device);
+
+    r = snd_pcm_info(pcm, pcm_info);
+    if (r < 0) {
+        pa_log("Mapping %s has query_hw_device enabled, but snd_pcm_info() failed %s: ", mapping->name, pa_alsa_strerror(r));
+        return -1;
+    }
+
+    mapping->hw_device_index = snd_pcm_info_get_device(pcm_info);
+
+    return 0;
+}
+
 void pa_alsa_profile_set_probe(
         pa_alsa_profile_set *ps,
         const char *dev_id,
@@ -4572,6 +4686,7 @@ void pa_alsa_profile_set_probe(
 
         /* Skip if this is already marked that it is supported (i.e. from the config file) */
         if (!p->supported) {
+            bool only_one_mapping;
 
             profile_finalize_probing(last, p);
             p->supported = true;
@@ -4599,6 +4714,15 @@ void pa_alsa_profile_set_probe(
             if (p->supported)
                 pa_log_debug("Looking at profile %s", p->name);
 
+            if (p->output_mappings && pa_idxset_size(p->output_mappings) == 1 &&
+                ((!p->input_mappings) || pa_idxset_size(p->input_mappings) == 0))
+                only_one_mapping = true;
+            else if (p->input_mappings && pa_idxset_size(p->input_mappings) == 1 &&
+                     ((!p->output_mappings) || pa_idxset_size(p->output_mappings) == 0))
+                only_one_mapping = true;
+            else
+                only_one_mapping = false;
+
             /* Check if we can open all new ones */
             if (p->output_mappings && p->supported)
                 PA_IDXSET_FOREACH(m, p->output_mappings, idx) {
@@ -4610,11 +4734,17 @@ void pa_alsa_profile_set_probe(
                     if (!(m->output_pcm = mapping_open_pcm(m, ss, dev_id, m->exact_channels,
                                                            SND_PCM_STREAM_PLAYBACK,
                                                            default_n_fragments,
-                                                           default_fragment_size_msec))) {
+                                                           default_fragment_size_msec)))
                         p->supported = false;
-                        if (pa_idxset_size(p->output_mappings) == 1 &&
-                            ((!p->input_mappings) || pa_idxset_size(p->input_mappings) == 0)) {
-                            pa_log_debug("Caching failure to open output:%s", m->name);
+
+                    if (m->output_pcm && m->query_hw_device && m->hw_device_index < 0) {
+                        if (mapping_query_hw_device(m, m->output_pcm) < 0)
+                            p->supported = false;
+                    }
+
+                    if (!p->supported) {
+                        if (only_one_mapping) {
+                            pa_log_debug("Caching failure to use output:%s", m->name);
                             pa_hashmap_put(broken_outputs, m, m);
                         }
                         break;
@@ -4631,11 +4761,17 @@ void pa_alsa_profile_set_probe(
                     if (!(m->input_pcm = mapping_open_pcm(m, ss, dev_id, m->exact_channels,
                                                           SND_PCM_STREAM_CAPTURE,
                                                           default_n_fragments,
-                                                          default_fragment_size_msec))) {
+                                                          default_fragment_size_msec)))
                         p->supported = false;
-                        if (pa_idxset_size(p->input_mappings) == 1 &&
-                            ((!p->output_mappings) || pa_idxset_size(p->output_mappings) == 0)) {
-                            pa_log_debug("Caching failure to open input:%s", m->name);
+
+                    if (m->input_pcm && m->query_hw_device && m->hw_device_index < 0) {
+                        if (mapping_query_hw_device(m, m->input_pcm) < 0)
+                            p->supported = false;
+                    }
+
+                    if (!p->supported) {
+                        if (only_one_mapping) {
+                            pa_log_debug("Caching failure to use input:%s", m->name);
                             pa_hashmap_put(broken_inputs, m, m);
                         }
                         break;

@@ -171,6 +171,8 @@ struct pa_alsa_jack {
 
     pa_dynarray *ucm_devices; /* pa_alsa_ucm_device */
     pa_dynarray *ucm_hw_mute_devices; /* pa_alsa_ucm_device */
+
+    bool append_pcm_to_name;
 };
 
 pa_alsa_jack *pa_alsa_jack_new(pa_alsa_path *path, const char *name);
@@ -191,6 +193,7 @@ struct pa_alsa_path {
     char *description_key;
     char *description;
     unsigned priority;
+    bool autodetect_eld_device;
     int eld_device;
     pa_proplist *proplist;
 
@@ -234,7 +237,7 @@ void pa_alsa_element_dump(pa_alsa_element *e);
 
 pa_alsa_path *pa_alsa_path_new(const char *paths_dir, const char *fname, pa_alsa_direction_t direction);
 pa_alsa_path *pa_alsa_path_synthesize(const char *element, pa_alsa_direction_t direction);
-int pa_alsa_path_probe(pa_alsa_path *p, snd_mixer_t *m, bool ignore_dB);
+int pa_alsa_path_probe(pa_alsa_path *p, pa_alsa_mapping *mapping, snd_mixer_t *m, bool ignore_dB);
 void pa_alsa_path_dump(pa_alsa_path *p);
 int pa_alsa_path_get_volume(pa_alsa_path *p, snd_mixer_t *m, const pa_channel_map *cm, pa_cvolume *v);
 int pa_alsa_path_get_mute(pa_alsa_path *path, snd_mixer_t *m, bool *muted);
@@ -274,6 +277,18 @@ struct pa_alsa_mapping {
     unsigned supported;
     bool exact_channels:1;
     bool fallback:1;
+
+    /* Should we try to figure out which hw device this mapping is using? HDMI
+     * jack detection and ELD handling requires us to know the underlying hw
+     * device. This defaults to false, because we only need this for HDMI, and
+     * it's not always possible to figure out the hw device (for example, a
+     * surround device might consist of several stereo hw devices). */
+    bool query_hw_device;
+
+    /* The "y" in "hw:x,y". This is set to -1 before the device index has been
+     * queried, or if the query failed. If query_hw_device is false, this is
+     * always -1. */
+    int hw_device_index;
 
     /* Temporarily used during probing */
     snd_pcm_t *input_pcm;
