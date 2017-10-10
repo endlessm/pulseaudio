@@ -3504,7 +3504,6 @@ pa_alsa_mapping *pa_alsa_mapping_get(pa_alsa_profile_set *ps, const char *name) 
     pa_sample_spec_init(&m->sample_spec);
     pa_channel_map_init(&m->channel_map);
     m->proplist = pa_proplist_new();
-    m->hw_device_index = -1;
 
     pa_hashmap_put(ps->mappings, m->name, m);
 
@@ -3638,31 +3637,6 @@ static int mapping_parse_exact_channels(pa_config_parser_state *state) {
     }
 
     m->exact_channels = b;
-
-    return 0;
-}
-
-static int mapping_parse_query_hw_device(pa_config_parser_state *state) {
-    pa_alsa_profile_set *ps;
-    pa_alsa_mapping *m;
-    int b;
-
-    pa_assert(state);
-
-    ps = state->userdata;
-
-    if (!(m = pa_alsa_mapping_get(ps, state->section))) {
-        pa_log("[%s:%u] Option '%s' not expected in section '%s'",
-               state->filename, state->lineno, state->lvalue, state->section);
-        return -1;
-    }
-
-    if ((b = pa_parse_boolean(state->rvalue)) < 0) {
-        pa_log("[%s:%u] %s has invalid value '%s'", state->filename, state->lineno, state->lvalue, state->section);
-        return -1;
-    }
-
-    m->query_hw_device = b;
 
     return 0;
 }
@@ -4383,7 +4357,6 @@ pa_alsa_profile_set* pa_alsa_profile_set_new(const char *fname, const pa_channel
         { "element-output",         mapping_parse_element,        NULL, NULL },
         { "direction",              mapping_parse_direction,      NULL, NULL },
         { "exact-channels",         mapping_parse_exact_channels, NULL, NULL },
-        { "query-hw-device",        mapping_parse_query_hw_device,NULL, NULL },
 
         /* Shared by [Mapping ...] and [Profile ...] */
         { "description",            mapping_parse_description,    NULL, NULL },
@@ -4558,24 +4531,6 @@ static int add_profiles_to_probe(
     return i;
 }
 
-static int mapping_query_hw_device(pa_alsa_mapping *mapping, snd_pcm_t *pcm) {
-    int r;
-    snd_pcm_info_t* pcm_info;
-    snd_pcm_info_alloca(&pcm_info);
-
-    pa_assert(mapping->query_hw_device);
-
-    r = snd_pcm_info(pcm, pcm_info);
-    if (r < 0) {
-        pa_log("Mapping %s has query_hw_device enabled, but snd_pcm_info() failed %s: ", mapping->name, pa_alsa_strerror(r));
-        return -1;
-    }
-
-    mapping->hw_device_index = snd_pcm_info_get_device(pcm_info);
-
-    return 0;
-}
-
 void pa_alsa_profile_set_probe(
         pa_alsa_profile_set *ps,
         const char *dev_id,
@@ -4619,7 +4574,6 @@ void pa_alsa_profile_set_probe(
 
         /* Skip if this is already marked that it is supported (i.e. from the config file) */
         if (!p->supported) {
-            bool only_one_mapping;
 
             profile_finalize_probing(last, p);
             p->supported = true;
@@ -4647,15 +4601,6 @@ void pa_alsa_profile_set_probe(
             if (p->supported)
                 pa_log_debug("Looking at profile %s", p->name);
 
-            if (p->output_mappings && pa_idxset_size(p->output_mappings) == 1 &&
-                ((!p->input_mappings) || pa_idxset_size(p->input_mappings) == 0))
-                only_one_mapping = true;
-            else if (p->input_mappings && pa_idxset_size(p->input_mappings) == 1 &&
-                     ((!p->output_mappings) || pa_idxset_size(p->output_mappings) == 0))
-                only_one_mapping = true;
-            else
-                only_one_mapping = false;
-
             /* Check if we can open all new ones */
             if (p->output_mappings && p->supported)
                 PA_IDXSET_FOREACH(m, p->output_mappings, idx) {
@@ -4667,17 +4612,11 @@ void pa_alsa_profile_set_probe(
                     if (!(m->output_pcm = mapping_open_pcm(m, ss, dev_id, m->exact_channels,
                                                            SND_PCM_STREAM_PLAYBACK,
                                                            default_n_fragments,
-                                                           default_fragment_size_msec)))
+                                                           default_fragment_size_msec))) {
                         p->supported = false;
-
-                    if (m->output_pcm && m->query_hw_device && m->hw_device_index < 0) {
-                        if (mapping_query_hw_device(m, m->output_pcm) < 0)
-                            p->supported = false;
-                    }
-
-                    if (!p->supported) {
-                        if (only_one_mapping) {
-                            pa_log_debug("Caching failure to use output:%s", m->name);
+                        if (pa_idxset_size(p->output_mappings) == 1 &&
+                            ((!p->input_mappings) || pa_idxset_size(p->input_mappings) == 0)) {
+                            pa_log_debug("Caching failure to open output:%s", m->name);
                             pa_hashmap_put(broken_outputs, m, m);
                         }
                         break;
@@ -4694,17 +4633,11 @@ void pa_alsa_profile_set_probe(
                     if (!(m->input_pcm = mapping_open_pcm(m, ss, dev_id, m->exact_channels,
                                                           SND_PCM_STREAM_CAPTURE,
                                                           default_n_fragments,
-                                                          default_fragment_size_msec)))
+                                                          default_fragment_size_msec))) {
                         p->supported = false;
-
-                    if (m->input_pcm && m->query_hw_device && m->hw_device_index < 0) {
-                        if (mapping_query_hw_device(m, m->input_pcm) < 0)
-                            p->supported = false;
-                    }
-
-                    if (!p->supported) {
-                        if (only_one_mapping) {
-                            pa_log_debug("Caching failure to use input:%s", m->name);
+                        if (pa_idxset_size(p->input_mappings) == 1 &&
+                            ((!p->output_mappings) || pa_idxset_size(p->output_mappings) == 0)) {
+                            pa_log_debug("Caching failure to open input:%s", m->name);
                             pa_hashmap_put(broken_inputs, m, m);
                         }
                         break;
