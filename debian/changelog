@@ -1,12 +1,44 @@
-pulseaudio (1:10.0-1endless1) master; urgency=medium
+pulseaudio (11.1-1) unstable; urgency=medium
 
-  * Bump the epoch.
-    We have been carrying the epoch of 1 in our version because we used to be
-    based on Ubuntu's package, which has an epoch of 1.
+  * New upstream version 11.1
+    - Drop all patches, applied upstream
+  * Bump debhelper compat to 10
+    - Drop explicit autoreconf, now implicit in debhelper 10
 
-    https://phabricator.endlessm.com/T14580
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 20 Sep 2017 21:13:18 -0300
 
- -- João Paulo Rechi Vita <jprvita@endlessm.com>  Fri, 24 Feb 2017 10:48:44 -0500
+pulseaudio (11.0-2) unstable; urgency=medium
+
+  * Backport patches from pending 11.1 upstream bugfix release
+    - Fixes crash on load of virtual sinks (Closes: #875541)
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 13 Sep 2017 20:10:52 -0300
+
+pulseaudio (11.0-1) unstable; urgency=medium
+
+  * New upstream version 11.0
+  * Bump Standards-Version
+  * Drop Conflicts/Replaces against old packages.
+    Stretch has version 10 so all of the versions are already satisfied
+
+ -- Felipe Sateler <fsateler@debian.org>  Tue, 05 Sep 2017 21:02:12 -0300
+
+pulseaudio (10.99.1-1) experimental; urgency=medium
+
+  * New upstream release candidate 10.99.1
+  * Bump Standards-Version (no changes)
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 26 Jul 2017 09:46:27 -0400
+
+pulseaudio (10.0-2) unstable; urgency=medium
+
+  [ Balint Reczey ]
+  * Removing myself from Uploaders
+
+  [ Scott Leggett ]
+  * Move AGPL-3 text into copyright file (Closes: #863082)
+
+ -- Scott Leggett <scott@sl.id.au>  Thu, 15 Jun 2017 20:07:30 +1000
 
 pulseaudio (10.0-1) unstable; urgency=medium
 
