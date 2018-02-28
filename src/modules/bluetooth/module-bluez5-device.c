@@ -77,6 +77,7 @@ static const char* const valid_modargs[] = {
 enum {
     BLUETOOTH_MESSAGE_IO_THREAD_FAILED,
     BLUETOOTH_MESSAGE_STREAM_FD_HUP,
+    BLUETOOTH_MESSAGE_SET_TRANSPORT_PLAYING,
     BLUETOOTH_MESSAGE_MAX
 };
 
@@ -755,8 +756,17 @@ static int transport_acquire(struct userdata *u, bool optional) {
     if (u->stream_fd < 0)
         return u->stream_fd;
 
+    /* transport_acquired must be set before calling
+     * pa_bluetooth_transport_set_state() */
     u->transport_acquired = true;
     pa_log_info("Transport %s acquired: fd %d", u->transport->path, u->stream_fd);
+
+    if (u->transport->state == PA_BLUETOOTH_TRANSPORT_STATE_IDLE) {
+        if (pa_thread_mq_get() != NULL)
+            pa_asyncmsgq_post(pa_thread_mq_get()->outq, PA_MSGOBJECT(u->msg), BLUETOOTH_MESSAGE_SET_TRANSPORT_PLAYING, NULL, 0, NULL, NULL);
+        else
+            pa_bluetooth_transport_set_state(u->transport, PA_BLUETOOTH_TRANSPORT_STATE_PLAYING);
+    }
 
     return 0;
 }
@@ -1851,7 +1861,7 @@ static pa_card_profile *create_card_profile(struct userdata *u, pa_bluetooth_pro
     switch (profile) {
     case PA_BLUETOOTH_PROFILE_A2DP_SINK:
         cp = pa_card_profile_new(name, _("High Fidelity Playback (A2DP Sink)"), sizeof(pa_bluetooth_profile_t));
-        cp->priority = 10;
+        cp->priority = 40;
         cp->n_sinks = 1;
         cp->n_sources = 0;
         cp->max_sink_channels = 2;
@@ -1863,7 +1873,7 @@ static pa_card_profile *create_card_profile(struct userdata *u, pa_bluetooth_pro
 
     case PA_BLUETOOTH_PROFILE_A2DP_SOURCE:
         cp = pa_card_profile_new(name, _("High Fidelity Capture (A2DP Source)"), sizeof(pa_bluetooth_profile_t));
-        cp->priority = 10;
+        cp->priority = 20;
         cp->n_sinks = 0;
         cp->n_sources = 1;
         cp->max_sink_channels = 0;
@@ -1875,7 +1885,7 @@ static pa_card_profile *create_card_profile(struct userdata *u, pa_bluetooth_pro
 
     case PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT:
         cp = pa_card_profile_new(name, _("Headset Head Unit (HSP/HFP)"), sizeof(pa_bluetooth_profile_t));
-        cp->priority = 20;
+        cp->priority = 30;
         cp->n_sinks = 1;
         cp->n_sources = 1;
         cp->max_sink_channels = 1;
@@ -1888,7 +1898,7 @@ static pa_card_profile *create_card_profile(struct userdata *u, pa_bluetooth_pro
 
     case PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY:
         cp = pa_card_profile_new(name, _("Headset Audio Gateway (HSP/HFP)"), sizeof(pa_bluetooth_profile_t));
-        cp->priority = 20;
+        cp->priority = 10;
         cp->n_sinks = 1;
         cp->n_sources = 1;
         cp->max_sink_channels = 1;
@@ -1960,7 +1970,7 @@ static int uuid_to_profile(const char *uuid, pa_bluetooth_profile_t *_r) {
         *_r = PA_BLUETOOTH_PROFILE_A2DP_SINK;
     else if (pa_streq(uuid, PA_BLUETOOTH_UUID_A2DP_SOURCE))
         *_r = PA_BLUETOOTH_PROFILE_A2DP_SOURCE;
-    else if (pa_streq(uuid, PA_BLUETOOTH_UUID_HSP_HS) || pa_streq(uuid, PA_BLUETOOTH_UUID_HFP_HF))
+    else if (pa_bluetooth_uuid_is_hsp_hs(uuid) || pa_streq(uuid, PA_BLUETOOTH_UUID_HFP_HF))
         *_r = PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT;
     else if (pa_streq(uuid, PA_BLUETOOTH_UUID_HSP_AG) || pa_streq(uuid, PA_BLUETOOTH_UUID_HFP_AG))
         *_r = PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY;
@@ -2226,6 +2236,16 @@ static int device_process_msg(pa_msgobject *obj, int code, void *data, int64_t o
         case BLUETOOTH_MESSAGE_STREAM_FD_HUP:
             if (u->transport->state > PA_BLUETOOTH_TRANSPORT_STATE_IDLE)
                 pa_bluetooth_transport_set_state(u->transport, PA_BLUETOOTH_TRANSPORT_STATE_IDLE);
+            break;
+        case BLUETOOTH_MESSAGE_SET_TRANSPORT_PLAYING:
+            /* transport_acquired needs to be checked here, because a message could have been
+             * pending when the profile was switched. If the new transport has been acquired
+             * correctly, the call below will have no effect because the transport state is
+             * already PLAYING. If transport_acquire() failed for the new profile, the transport
+             * state should not be changed. If the transport has been released for other reasons
+             * (I/O thread shutdown), transport_acquired will also be false. */
+            if (u->transport_acquired)
+                pa_bluetooth_transport_set_state(u->transport, PA_BLUETOOTH_TRANSPORT_STATE_PLAYING);
             break;
     }
 
