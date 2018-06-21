@@ -83,7 +83,7 @@ void pa_card_profile_set_available(pa_card_profile *c, pa_available_t available)
 
     c->available = available;
     pa_log_debug("Setting card %s profile %s to availability status %s", c->card->name, c->name,
-                 available == PA_AVAILABLE_YES ? "yes" : available == PA_AVAILABLE_NO ? "no" : "unknown");
+                 pa_available_to_string(available));
 
     /* Post subscriptions to the card which owns us */
     pa_assert_se(core = c->card->core);
@@ -199,7 +199,9 @@ void pa_card_choose_initial_profile(pa_card *card) {
      * or if all profiles are unavailable, pick the profile with the highest
      * priority regardless of its availability. */
 
+    pa_log_debug("Looking for initial profile for card %s", card->name);
     PA_HASHMAP_FOREACH(profile, card->profiles, state) {
+        pa_log_debug("%s availability %s", profile->name, pa_available_to_string(profile->available));
         if (profile->available == PA_AVAILABLE_NO)
             continue;
 
@@ -217,6 +219,7 @@ void pa_card_choose_initial_profile(pa_card *card) {
 
     card->active_profile = best;
     card->save_profile = false;
+    pa_log_info("%s: active_profile: %s", card->name, card->active_profile->name);
 
     /* Let policy modules override the default. */
     pa_hook_fire(&card->core->hooks[PA_CORE_HOOK_CARD_CHOOSE_INITIAL_PROFILE], card);
@@ -320,6 +323,8 @@ int pa_card_set_profile(pa_card *c, pa_card_profile *profile, bool save) {
         }
         return 0;
     }
+
+    pa_log_debug("%s: active_profile: %s -> %s", c->name, c->active_profile->name, profile->name);
 
     /* If we're setting the initial profile, we shouldn't call set_profile(),
      * because the implementations don't expect that (for historical reasons).
