@@ -204,7 +204,10 @@ void pa_card_choose_initial_profile(pa_card *card) {
      * or if all profiles are unavailable, pick the profile with the highest
      * priority regardless of its availability. */
 
+    pa_log_debug("Looking for an initial profile for card %s", card->name);
     PA_HASHMAP_FOREACH(profile, card->profiles, state) {
+        pa_log_debug("profile %s availability %s", profile->name, profile->available == PA_AVAILABLE_YES ? "yes" :
+                                                                  profile->available == PA_AVAILABLE_NO ? "no" : "unknown");
         if (profile->available == PA_AVAILABLE_NO)
             continue;
 
@@ -213,6 +216,7 @@ void pa_card_choose_initial_profile(pa_card *card) {
     }
 
     if (!best) {
+        pa_log_info("No profile with availability status 'yes' or 'unknown' found for card %s", card->name);
         PA_HASHMAP_FOREACH(profile, card->profiles, state) {
             if (!best || profile->priority > best->priority)
                 best = profile;
@@ -220,6 +224,7 @@ void pa_card_choose_initial_profile(pa_card *card) {
     }
     pa_assert(best);
 
+    pa_log_info("Initial profile %s chosen for card %s", best->name, card->name);
     card->active_profile = best;
     card->save_profile = false;
 
