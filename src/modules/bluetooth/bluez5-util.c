@@ -37,7 +37,7 @@
 
 #include "bluez5-util.h"
 
-#define WAIT_FOR_PROFILES_TIMEOUT_USEC (3 * PA_USEC_PER_SEC)
+#define WAIT_FOR_PROFILES_TIMEOUT_USEC (60 * PA_USEC_PER_SEC)
 
 #define BLUEZ_SERVICE "org.bluez"
 #define BLUEZ_ADAPTER_INTERFACE BLUEZ_SERVICE ".Adapter1"
