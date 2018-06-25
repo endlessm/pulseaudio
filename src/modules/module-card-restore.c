@@ -552,8 +552,14 @@ static pa_hook_result_t card_new_hook_callback(pa_core *c, pa_card_new_data *new
 
 static pa_hook_result_t card_choose_initial_profile_callback(pa_core *core, pa_card *card, struct userdata *u) {
     struct entry *e;
+    const char *s;
 
     if (!(e = entry_read(u, card->name)))
+        return PA_HOOK_OK;
+
+    /* Do not restore initial profile on bluetooth cards */
+    s = pa_proplist_gets(card->proplist, PA_PROP_DEVICE_BUS);
+    if (!s || pa_streq(s, "bluetooth"))
         return PA_HOOK_OK;
 
     if (e->profile[0]) {
