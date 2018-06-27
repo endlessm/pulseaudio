@@ -1,3 +1,12 @@
+pulseaudio (1:12.0-1) master; urgency=medium
+
+  * Bump the epoch.
+
+    We need to carry the epoch of 1 in our version because we used to be based
+    on Ubuntu's package, which has an epoch of 1.
+
+ -- João Paulo Rechi Vita <jprvita@endlessm.com>  Mon, 27 Jun 2018 08:18:00 -0700
+
 pulseaudio (12.0-1) unstable; urgency=medium
 
   * New upstream version 12.0
