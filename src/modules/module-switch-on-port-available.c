@@ -262,10 +262,19 @@ static void switch_from_port(pa_device_port *port) {
         return; /* Already deselected */
 
     /* Try to find a good enough port to switch to */
-    PA_HASHMAP_FOREACH(p, port->card->ports, state)
-        if (p->direction == port->direction && p != port && p->available != PA_AVAILABLE_NO &&
-           (!best_port || best_port->priority < p->priority))
+    PA_HASHMAP_FOREACH(p, port->card->ports, state) {
+        if (p == port)
+            continue;
+
+        if (p->available == PA_AVAILABLE_NO)
+            continue;
+
+        if (p->direction != port->direction)
+            continue;
+
+        if (!best_port || best_port->priority < p->priority)
            best_port = p;
+    }
 
     pa_log_debug("Trying to switch away from port %s, found %s", port->name, best_port ? best_port->name : "no better option");
 
