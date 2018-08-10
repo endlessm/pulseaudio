@@ -68,17 +68,23 @@ static pa_hook_result_t sink_put_hook_callback(pa_core *c, pa_sink *sink, void* 
     if (c->state != PA_CORE_RUNNING)
         return PA_HOOK_OK;
 
-    /* Don't switch to any internal devices */
-    if ((s = pa_proplist_gets(sink->proplist, PA_PROP_DEVICE_BUS))) {
-        if (pa_streq(s, "pci"))
+    pa_log_debug("Trying to switch to new sink %s", sink->name);
+
+    /* Don't switch to any internal devices except HDMI */
+    s = pa_proplist_gets(sink->proplist, PA_PROP_DEVICE_STRING);
+    if (s && !pa_startswith(s, "hdmi")) {
+        s = pa_proplist_gets(sink->proplist, PA_PROP_DEVICE_BUS);
+        if (pa_safe_streq(s, "pci") || pa_safe_streq(s, "isa")) {
+            pa_log_debug("Refusing to switch to sink on %s bus", s);
             return PA_HOOK_OK;
-        else if (pa_streq(s, "isa"))
-            return PA_HOOK_OK;
+        }
     }
 
     /* Ignore virtual sinks if not configured otherwise on the command line */
-    if (u->ignore_virtual && !(sink->flags & PA_SINK_HARDWARE))
+    if (u->ignore_virtual && !(sink->flags & PA_SINK_HARDWARE)) {
+        pa_log_debug("Refusing to switch to virtual sink");
         return PA_HOOK_OK;
+    }
 
     /* No default sink, nothing to move away, just set the new default */
     if (!c->default_sink) {
@@ -86,12 +92,16 @@ static pa_hook_result_t sink_put_hook_callback(pa_core *c, pa_sink *sink, void* 
         return PA_HOOK_OK;
     }
 
-    if (c->default_sink == sink)
+    if (c->default_sink == sink) {
+        pa_log_debug("%s already is the default sink", sink->name);
         return PA_HOOK_OK;
+    }
 
     if (u->only_from_unavailable)
-        if (!c->default_sink->active_port || c->default_sink->active_port->available != PA_AVAILABLE_NO)
+        if (!c->default_sink->active_port || c->default_sink->active_port->available != PA_AVAILABLE_NO) {
+            pa_log_debug("Current default sink is available and module argument only_from_unavailable was set");
             return PA_HOOK_OK;
+        }
 
     old_default_sink = c->default_sink;
 
@@ -138,17 +148,20 @@ static pa_hook_result_t source_put_hook_callback(pa_core *c, pa_source *source, 
     if (source->monitor_of)
         return PA_HOOK_OK;
 
+    pa_log_debug("Trying to switch to new source %s", source->name);
+
     /* Don't switch to any internal devices */
-    if ((s = pa_proplist_gets(source->proplist, PA_PROP_DEVICE_BUS))) {
-        if (pa_streq(s, "pci"))
-            return PA_HOOK_OK;
-        else if (pa_streq(s, "isa"))
-            return PA_HOOK_OK;
+    s = pa_proplist_gets(source->proplist, PA_PROP_DEVICE_BUS);
+    if (pa_safe_streq(s, "pci") || pa_safe_streq(s, "isa")) {
+        pa_log_debug("Refusing to switch to source on %s bus", s);
+        return PA_HOOK_OK;
     }
 
     /* Ignore virtual sources if not configured otherwise on the command line */
-    if (u->ignore_virtual && !(source->flags & PA_SOURCE_HARDWARE))
+    if (u->ignore_virtual && !(source->flags & PA_SOURCE_HARDWARE)) {
+        pa_log_debug("Refusing to switch to virtual source");
         return PA_HOOK_OK;
+    }
 
     /* No default source, nothing to move away, just set the new default */
     if (!c->default_source) {
@@ -156,12 +169,16 @@ static pa_hook_result_t source_put_hook_callback(pa_core *c, pa_source *source, 
         return PA_HOOK_OK;
     }
 
-    if (c->default_source == source)
+    if (c->default_source == source) {
+        pa_log_debug("%s already is the default source", source->name);
         return PA_HOOK_OK;
+    }
 
     if (u->only_from_unavailable)
-        if (!c->default_source->active_port || c->default_source->active_port->available != PA_AVAILABLE_NO)
+        if (!c->default_source->active_port || c->default_source->active_port->available != PA_AVAILABLE_NO) {
+            pa_log_debug("Current default source is available and module argument only_from_unavailable was set");
             return PA_HOOK_OK;
+        }
 
     old_default_source = c->default_source;
 
@@ -207,14 +224,14 @@ int pa__init(pa_module*m) {
     pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_SOURCE_PUT], PA_HOOK_LATE+20, (pa_hook_cb_t) source_put_hook_callback, u);
 
     if (pa_modargs_get_value_boolean(ma, "only_from_unavailable", &u->only_from_unavailable) < 0) {
-	pa_log("Failed to get a boolean value for only_from_unavailable.");
-	goto fail;
+        pa_log("Failed to get a boolean value for only_from_unavailable.");
+        goto fail;
     }
 
     u->ignore_virtual = true;
     if (pa_modargs_get_value_boolean(ma, "ignore_virtual", &u->ignore_virtual) < 0) {
-	pa_log("Failed to get a boolean value for ignore_virtual.");
-	goto fail;
+        pa_log("Failed to get a boolean value for ignore_virtual.");
+        goto fail;
     }
 
     pa_modargs_free(ma);

@@ -708,12 +708,13 @@ static pa_hook_result_t source_output_unlink_hook_callback(pa_core *c, pa_source
     return PA_HOOK_OK;
 }
 
-static pa_card_profile *find_best_profile_with_available_ports(pa_card *card, pa_direction_t direction) {
+static pa_card_profile *find_best_available_profile(pa_card *card, pa_direction_t direction) {
     pa_card_profile *profile = NULL;
     pa_card_profile *best_profile = NULL;
     void *state;
 
     pa_assert(card);
+    best_profile = pa_hashmap_get(card->profiles, "off");
 
     PA_HASHMAP_FOREACH(profile, card->profiles, state) {
         if (profile->available == PA_AVAILABLE_NO)
@@ -722,11 +723,11 @@ static pa_card_profile *find_best_profile_with_available_ports(pa_card *card, pa
         if (!pa_card_profile_contains_type_ports(profile, direction, PA_AVAILABLE_YES))
             continue;
 
-        if (!best_profile || profile->priority > best_profile->priority)
+        if (profile->priority > best_profile->priority)
             best_profile = profile;
     }
 
-    if (!best_profile) {
+    if (pa_safe_streq(best_profile->name, "off")) {
         PA_HASHMAP_FOREACH(profile, card->profiles, state) {
             if (profile->available == PA_AVAILABLE_NO)
                 continue;
@@ -734,12 +735,28 @@ static pa_card_profile *find_best_profile_with_available_ports(pa_card *card, pa
             if (!pa_card_profile_contains_type_ports(profile, direction, PA_AVAILABLE_UNKNOWN))
                 continue;
 
-            if (!best_profile || profile->priority > best_profile->priority)
+            if (profile->priority > best_profile->priority)
                 best_profile = profile;
         }
     }
 
     return best_profile;
+}
+
+static pa_hook_result_t card_profile_available_changed(pa_core *c, pa_card_profile *profile, struct userdata *u) {
+    pa_card *card;
+
+    pa_assert(profile);
+    pa_assert_se(card = profile->card);
+
+    if (!pa_safe_streq(card->active_profile->name, profile->name))
+        return PA_HOOK_OK;
+
+    if (profile->available != PA_AVAILABLE_NO)
+        return PA_HOOK_OK;
+
+    pa_log_debug("Active profile %s on card %s became unavailable, switching to another profile", profile->name, card->name);
+    return pa_card_set_profile(card, find_best_available_profile(card, PA_DIRECTION_OUTPUT), false);
 }
 
 static void switch_to_alternative_profile_if_needed(pa_card *card) {
@@ -755,7 +772,7 @@ static void switch_to_alternative_profile_if_needed(pa_card *card) {
 
     /* Try to avoid situations where we could settle on a profile when
        there are not available output ports that could be actually used. */
-    if ((alt_profile = find_best_profile_with_available_ports(card, PA_DIRECTION_OUTPUT)))
+    if ((alt_profile = find_best_available_profile(card, PA_DIRECTION_OUTPUT)))
         pa_card_set_profile(card, alt_profile, false);
 }
 
@@ -961,6 +978,8 @@ int pa__init(pa_module *m) {
     /* We do this only after everything has been initialized, otherwise the
        information needed to make the decision would not be still available */
     switch_to_alternative_profile_if_needed(u->card);
+    pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_CARD_PROFILE_AVAILABLE_CHANGED], PA_HOOK_NORMAL,
+            (pa_hook_cb_t) card_profile_available_changed, u);
 
     if (reserve)
         pa_reserve_wrapper_unref(reserve);
