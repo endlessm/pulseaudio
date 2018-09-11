@@ -89,6 +89,8 @@ struct pa_bluetooth_discovery {
     pa_hashmap *devices;
     pa_hashmap *transports;
 
+    pa_hashmap *disabled_profiles; /* pa_bluetooth_profile_t -> pa_bluetooth_profile_t (hashmap-as-a-set) */
+
     int headset_backend;
     pa_bluetooth_backend *ofono_backend, *native_backend;
     PA_LLIST_HEAD(pa_dbus_pending, pending);
@@ -1116,6 +1118,10 @@ static void get_managed_objects_reply(DBusPendingCall *pending, void *userdata) 
 
     y->objects_listed = true;
 
+    if (pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT) ||
+        pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY))
+        goto finish;
+
     if (!y->native_backend && y->headset_backend != HEADSET_BACKEND_OFONO)
         y->native_backend = pa_bluetooth_native_backend_new(y->core, y, (y->headset_backend == HEADSET_BACKEND_NATIVE));
     if (!y->ofono_backend && y->headset_backend != HEADSET_BACKEND_NATIVE)
@@ -1342,6 +1348,10 @@ static uint8_t a2dp_default_bitpool(uint8_t freq, uint8_t mode) {
 
     pa_log_warn("Invalid sampling freq %u", freq);
     return 53;
+}
+
+bool pa_bluetooth_profile_is_disabled(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile) {
+    return !!pa_hashmap_get(y->disabled_profiles, PA_UINT32_TO_PTR(profile));
 }
 
 const char *pa_bluetooth_profile_to_string(pa_bluetooth_profile_t profile) {
@@ -1757,6 +1767,9 @@ static void endpoint_init(pa_bluetooth_discovery *y, pa_bluetooth_profile_t prof
 
     pa_assert(y);
 
+    if (pa_bluetooth_profile_is_disabled(y, profile))
+        return;
+
     switch(profile) {
         case PA_BLUETOOTH_PROFILE_A2DP_SINK:
             pa_assert_se(dbus_connection_register_object_path(pa_dbus_connection_get(y->connection), A2DP_SOURCE_ENDPOINT,
@@ -1803,6 +1816,7 @@ pa_bluetooth_discovery* pa_bluetooth_discovery_get(pa_core *c, int headset_backe
     y->devices = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func, NULL,
                                      (pa_free_cb_t) device_free);
     y->transports = pa_hashmap_new(pa_idxset_string_hash_func, pa_idxset_string_compare_func);
+    y->disabled_profiles = pa_hashmap_new(NULL, NULL);
     PA_LLIST_HEAD_INIT(pa_dbus_pending, y->pending);
 
     for (i = 0; i < PA_BLUETOOTH_HOOK_MAX; i++)
