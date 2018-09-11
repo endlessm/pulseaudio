@@ -22,6 +22,8 @@
 #include <config.h>
 #endif
 
+#include <fcntl.h>
+
 #include <pulse/rtclock.h>
 #include <pulse/timeval.h>
 #include <pulse/xmalloc.h>
@@ -1689,6 +1691,71 @@ static void endpoint_done(pa_bluetooth_discovery *y, const char *endpoint) {
     dbus_connection_unregister_object_path(pa_dbus_connection_get(y->connection), endpoint);
 }
 
+#define PRODUCT_ID_BUF_SIZE 128
+#ifdef __arm__
+#define PRODUCT_ID_FILENAME "/proc/device-tree/compatible"
+#else
+#define PRODUCT_ID_FILENAME "/sys/class/dmi/id/sys_vendor"
+#endif
+static char *get_product_id() {
+    int fd;
+    char buf[PRODUCT_ID_BUF_SIZE];
+    ssize_t n;
+#ifndef __arm__
+    ssize_t n2;
+#endif
+
+    fd = pa_open_cloexec(PRODUCT_ID_FILENAME, O_RDONLY, 0);
+    if (fd < 0)
+        return NULL;
+
+    n = pa_read(fd, buf, sizeof(buf), NULL);
+    close(fd);
+    if (n < 0)
+        return NULL;
+
+#ifndef __arm__
+    n--;
+    buf[n] = ' ';
+
+    fd = pa_open_cloexec("/sys/class/dmi/id/product_name", O_RDONLY, 0);
+    if (fd < 0)
+        return NULL;
+
+    n2 = read(fd, buf+n+1, sizeof(buf)-n-1);
+    if (n2 < 0)
+        return NULL;
+    close(fd);
+    n2--;
+    buf[n+1+n2] = '\0';
+#endif
+
+    return pa_xstrdup(buf);
+}
+
+typedef struct hw_disabled_profile {
+    const char *product_id;
+    pa_bluetooth_profile_t profile;
+} hw_disabled_profile_t;
+
+static hw_disabled_profile_t hw_disabled_profiles[] = {
+    {}
+};
+
+static void check_hw_disabled_profiles(pa_bluetooth_discovery *y) {
+    int i = 0;
+    char *id = get_product_id();
+
+    while (hw_disabled_profiles[i].product_id) {
+        if (pa_safe_streq(id, hw_disabled_profiles[i].product_id)) {
+            pa_bluetooth_profile_t p = hw_disabled_profiles[i].profile;
+            pa_log_debug("Disabling Bluetooth profile \"%s\" on %s", pa_bluetooth_profile_to_string(p), id);
+            pa_hashmap_put(y->disabled_profiles, PA_UINT32_TO_PTR(p), PA_UINT32_TO_PTR(p));
+        }
+        i++;
+    }
+}
+
 pa_bluetooth_discovery* pa_bluetooth_discovery_get(pa_core *c, int headset_backend) {
     pa_bluetooth_discovery *y;
     DBusError err;
@@ -1708,6 +1775,8 @@ pa_bluetooth_discovery* pa_bluetooth_discovery_get(pa_core *c, int headset_backe
     y->transports = pa_hashmap_new(pa_idxset_string_hash_func, pa_idxset_string_compare_func);
     y->disabled_profiles = pa_hashmap_new(NULL, NULL);
     PA_LLIST_HEAD_INIT(pa_dbus_pending, y->pending);
+
+    check_hw_disabled_profiles(y);
 
     for (i = 0; i < PA_BLUETOOTH_HOOK_MAX; i++)
         pa_hook_init(&y->hooks[i], y);
