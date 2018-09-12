@@ -1739,6 +1739,8 @@ typedef struct hw_disabled_profile {
 } hw_disabled_profile_t;
 
 static hw_disabled_profile_t hw_disabled_profiles[] = {
+    { "endless,ec100", PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT },
+    { "endless,ec100", PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY },
     {}
 };
 
