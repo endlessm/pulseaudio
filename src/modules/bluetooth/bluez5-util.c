@@ -1865,8 +1865,8 @@ static void check_hw_disabled_profiles(pa_bluetooth_discovery *y) {
             pa_bluetooth_profile_t p = hw_disabled_profiles[i].profile;
             pa_log_debug("Disabling Bluetooth profile \"%s\" on %s", pa_bluetooth_profile_to_string(p), id);
             pa_hashmap_put(y->disabled_profiles, PA_UINT32_TO_PTR(p), PA_UINT32_TO_PTR(p));
-            i++;
         }
+        i++;
     }
 }
 
