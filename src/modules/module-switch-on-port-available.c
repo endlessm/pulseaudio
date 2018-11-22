@@ -64,6 +64,8 @@ static void card_info_free(struct card_info *info) {
 
 static bool profile_good_for_output(pa_card_profile *profile, pa_device_port *port) {
     pa_card *card;
+    pa_sink *sink;
+    uint32_t idx;
 
     pa_assert(profile);
 
@@ -81,11 +83,21 @@ static bool profile_good_for_output(pa_card_profile *profile, pa_device_port *po
     if (port == card->preferred_output_port)
         return true;
 
+    PA_IDXSET_FOREACH(sink, card->sinks, idx) {
+        if (!sink->active_port)
+            continue;
+
+        if ((sink->active_port->available != PA_AVAILABLE_NO) && (sink->active_port->priority >= port->priority))
+            return false;
+    }
+
     return true;
 }
 
 static bool profile_good_for_input(pa_card_profile *profile, pa_device_port *port) {
     pa_card *card;
+    pa_source *source;
+    uint32_t idx;
 
     pa_assert(profile);
 
@@ -103,6 +115,14 @@ static bool profile_good_for_input(pa_card_profile *profile, pa_device_port *por
     if (port == card->preferred_input_port)
         return true;
 
+    PA_IDXSET_FOREACH(source, card->sources, idx) {
+        if (!source->active_port)
+            continue;
+
+        if ((source->active_port->available != PA_AVAILABLE_NO) && (source->active_port->priority >= port->priority))
+            return false;
+    }
+
     return true;
 }
 
@@ -113,13 +133,6 @@ static int try_to_switch_profile(pa_device_port *port) {
 
     pa_log_debug("Finding best profile for port %s, preferred = %s",
                  port->name, pa_strnull(port->preferred_profile));
-
-    /* Prefer the current active profile if it has available ports on the same direction
-     * of the port we are trying to switch to and a higher priority */
-    if (pa_card_profile_has_available_ports(port->card->active_profile, port->direction, PA_AVAILABLE_YES)) {
-        best_profile = port->card->active_profile;
-        best_prio = port->card->active_profile->priority;
-    }
 
     PA_HASHMAP_FOREACH(profile, port->profiles, state) {
         bool good = false;
@@ -155,11 +168,6 @@ static int try_to_switch_profile(pa_device_port *port) {
 
     if (!best_profile) {
         pa_log_debug("No suitable profile found");
-        return -1;
-    }
-
-    if (best_profile == port->card->active_profile) {
-        pa_log_debug("No better profile found");
         return -1;
     }
 
