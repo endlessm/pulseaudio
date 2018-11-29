@@ -774,6 +774,9 @@ static pa_hook_result_t card_profile_available_changed(pa_core *c, pa_card_profi
     pa_assert(profile);
     pa_assert_se(card = profile->card);
 
+    if (card != u->card)
+        return PA_HOOK_OK;
+
     if (!card->active_profile)
         return PA_HOOK_OK;
 
