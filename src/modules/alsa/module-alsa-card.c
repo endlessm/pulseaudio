@@ -774,6 +774,9 @@ static pa_hook_result_t card_profile_available_changed(pa_core *c, pa_card_profi
     pa_assert(profile);
     pa_assert_se(card = profile->card);
 
+    if (card != u->card)
+        return PA_HOOK_OK;
+
     if (!card->active_profile)
         return PA_HOOK_OK;
 
@@ -784,7 +787,9 @@ static pa_hook_result_t card_profile_available_changed(pa_core *c, pa_card_profi
         return PA_HOOK_OK;
 
     pa_log_debug("Active profile %s on card %s became unavailable, switching to another profile", profile->name, card->name);
-    return pa_card_set_profile(card, find_best_profile(card), false);
+    pa_card_set_profile(card, find_best_profile(card), false);
+
+    return PA_HOOK_OK;
 }
 
 int pa__init(pa_module *m) {
