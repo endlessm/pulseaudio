@@ -121,9 +121,6 @@ void pa_card_profile_free(pa_card_profile *c);
 /* The profile's available status has changed */
 void pa_card_profile_set_available(pa_card_profile *c, pa_available_t available);
 
-/* Check if card has any ports with a certain availability for a specific direction */
-bool pa_card_profile_has_available_ports(pa_card_profile *c, pa_direction_t direction, pa_available_t available);
-
 pa_card_new_data *pa_card_new_data_init(pa_card_new_data *data);
 void pa_card_new_data_set_name(pa_card_new_data *data, const char *name);
 void pa_card_new_data_set_preferred_port(pa_card_new_data *data, pa_direction_t direction, pa_device_port *port);
