@@ -89,25 +89,8 @@ void pa_card_profile_set_available(pa_card_profile *c, pa_available_t available)
     pa_assert_se(core = c->card->core);
     pa_subscription_post(core, PA_SUBSCRIPTION_EVENT_CARD|PA_SUBSCRIPTION_EVENT_CHANGE, c->card->index);
 
-    pa_hook_fire(&core->hooks[PA_CORE_HOOK_CARD_PROFILE_AVAILABLE_CHANGED], c);
-}
-
-bool pa_card_profile_has_available_ports(pa_card_profile *c, pa_direction_t direction, pa_available_t available) {
-    pa_card *card;
-    pa_device_port *port;
-    void *state;
-
-    pa_assert(c);
-
-    card = c->card;
-    pa_assert(card);
-
-    PA_HASHMAP_FOREACH(port, card->ports, state) {
-        if (pa_hashmap_get(port->profiles, c->name) && port->direction == direction && port->available == available)
-            return true;
-    }
-
-    return false;
+    if (c->card->linked)
+        pa_hook_fire(&core->hooks[PA_CORE_HOOK_CARD_PROFILE_AVAILABLE_CHANGED], c);
 }
 
 pa_card_new_data* pa_card_new_data_init(pa_card_new_data *data) {

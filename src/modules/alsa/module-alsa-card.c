@@ -366,6 +366,7 @@ static int report_jack_state(snd_mixer_elem_t *melem, unsigned int mask) {
     pa_alsa_jack *jack;
     struct temp_port_avail *tp, *tports;
     pa_card_profile *profile;
+    pa_available_t active_available = PA_AVAILABLE_UNKNOWN;
 
     pa_assert(u);
 
@@ -461,6 +462,8 @@ static int report_jack_state(snd_mixer_elem_t *melem, unsigned int mask) {
      *
      * If there are no output ports at all, but the profile contains at least
      * one sink, then the output is considered to be available. */
+    if (u->card->active_profile)
+        active_available = u->card->active_profile->available;
     PA_HASHMAP_FOREACH(profile, u->card->profiles, state) {
         pa_device_port *port;
         void *state2;
@@ -490,8 +493,17 @@ static int report_jack_state(snd_mixer_elem_t *melem, unsigned int mask) {
         if ((has_input_port && !found_available_input_port) || (has_output_port && !found_available_output_port))
             available = PA_AVAILABLE_NO;
 
-        pa_card_profile_set_available(profile, available);
+        /* We want to update the active profile's status last, so logic that
+         * may change the active profile based on profile availability status
+         * has an updated view of all profiles' availabilities. */
+        if (profile == u->card->active_profile)
+            active_available = available;
+        else
+            pa_card_profile_set_available(profile, available);
     }
+
+    if (u->card->active_profile)
+        pa_card_profile_set_available(u->card->active_profile, active_available);
 
     pa_xfree(tports);
     return 0;
@@ -733,65 +745,6 @@ static pa_hook_result_t source_output_unlink_hook_callback(pa_core *c, pa_source
     return PA_HOOK_OK;
 }
 
-static pa_card_profile *find_best_profile(pa_card *card) {
-    pa_card_profile *profile = NULL;
-    pa_card_profile *best_profile = NULL;
-    void *state;
-
-    pa_assert(card);
-    best_profile = pa_hashmap_get(card->profiles, "off");
-
-    PA_HASHMAP_FOREACH(profile, card->profiles, state) {
-        if (profile->available == PA_AVAILABLE_NO)
-            continue;
-
-        if (!pa_card_profile_has_available_ports(profile, PA_DIRECTION_OUTPUT, PA_AVAILABLE_YES))
-            continue;
-
-        if (profile->priority > best_profile->priority)
-            best_profile = profile;
-    }
-
-    if (pa_safe_streq(best_profile->name, "off")) {
-        PA_HASHMAP_FOREACH(profile, card->profiles, state) {
-            if (profile->available == PA_AVAILABLE_NO)
-                continue;
-
-            if (!pa_card_profile_has_available_ports(profile, PA_DIRECTION_OUTPUT, PA_AVAILABLE_UNKNOWN))
-                continue;
-
-            if (profile->priority > best_profile->priority)
-                best_profile = profile;
-        }
-    }
-
-    return best_profile;
-}
-
-static pa_hook_result_t card_profile_available_changed(pa_core *c, pa_card_profile *profile, struct userdata *u) {
-    pa_card *card;
-
-    pa_assert(profile);
-    pa_assert_se(card = profile->card);
-
-    if (card != u->card)
-        return PA_HOOK_OK;
-
-    if (!card->active_profile)
-        return PA_HOOK_OK;
-
-    if (profile->available != PA_AVAILABLE_NO)
-        return PA_HOOK_OK;
-
-    if (!pa_safe_streq(profile->name, card->active_profile->name))
-        return PA_HOOK_OK;
-
-    pa_log_debug("Active profile %s on card %s became unavailable, switching to another profile", profile->name, card->name);
-    pa_card_set_profile(card, find_best_profile(card), false);
-
-    return PA_HOOK_OK;
-}
-
 int pa__init(pa_module *m) {
     pa_card_new_data data;
     bool ignore_dB = false;
@@ -968,9 +921,6 @@ int pa__init(pa_module *m) {
             (pa_hook_cb_t) card_suspend_changed, u);
 
     init_jacks(u);
-
-    pa_module_hook_connect(m, &m->core->hooks[PA_CORE_HOOK_CARD_PROFILE_AVAILABLE_CHANGED], PA_HOOK_NORMAL,
-            (pa_hook_cb_t) card_profile_available_changed, u);
 
     pa_card_choose_initial_profile(u->card);
 
