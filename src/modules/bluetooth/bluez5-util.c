@@ -1014,7 +1014,6 @@ static void parse_interfaces_and_properties(pa_bluetooth_discovery *y, DBusMessa
                 return;
 
             register_endpoint(y, path, A2DP_SOURCE_ENDPOINT, PA_BLUETOOTH_UUID_A2DP_SOURCE);
-            register_endpoint(y, path, A2DP_SINK_ENDPOINT, PA_BLUETOOTH_UUID_A2DP_SINK);
 
         } else if (pa_streq(interface, BLUEZ_DEVICE_INTERFACE)) {
 
@@ -1930,7 +1929,6 @@ pa_bluetooth_discovery* pa_bluetooth_discovery_get(pa_core *c, int headset_backe
     y->matches_added = true;
 
     endpoint_init(y, PA_BLUETOOTH_PROFILE_A2DP_SINK);
-    endpoint_init(y, PA_BLUETOOTH_PROFILE_A2DP_SOURCE);
 
     get_managed_objects(y);
 
