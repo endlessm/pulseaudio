@@ -92,6 +92,16 @@ static pa_hook_result_t sink_put_hook_callback(pa_core *c, pa_sink *sink, void* 
         return PA_HOOK_OK;
     }
 
+    /* Don't switch to computers implementing Bluetooth audio profiles */
+    s = pa_proplist_gets(sink->proplist, PA_PROP_DEVICE_BUS);
+    if (pa_safe_streq(s, "bluetooth")) {
+        s = pa_proplist_gets(sink->proplist, PA_PROP_DEVICE_FORM_FACTOR);
+        if (pa_safe_streq(s, "computer")) {
+            pa_log_debug("Refusing to switch to Bluetooth sink on a computer");
+            return PA_HOOK_OK;
+        }
+    }
+
     /* Ignore virtual sinks if not configured otherwise on the command line */
     if (u->ignore_virtual && !(sink->flags & PA_SINK_HARDWARE)) {
         pa_log_debug("Refusing to switch to virtual sink");
@@ -150,6 +160,16 @@ static pa_hook_result_t source_put_hook_callback(pa_core *c, pa_source *source, 
     if (u->blacklist && (pa_match(u->blacklist, source->name) > 0)) {
         pa_log_info("Refusing to switch to blacklisted source %s", source->name);
         return PA_HOOK_OK;
+    }
+
+    /* Don't switch to computers implementing Bluetooth audio profiles */
+    s = pa_proplist_gets(source->proplist, PA_PROP_DEVICE_BUS);
+    if (pa_safe_streq(s, "bluetooth")) {
+        s = pa_proplist_gets(source->proplist, PA_PROP_DEVICE_FORM_FACTOR);
+        if (pa_safe_streq(s, "computer")) {
+            pa_log_debug("Refusing to switch to Bluetooth source on a computer");
+            return PA_HOOK_OK;
+        }
     }
 
     /* Ignore virtual sources if not configured otherwise on the command line */
