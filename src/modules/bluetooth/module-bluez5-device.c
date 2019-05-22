@@ -174,9 +174,11 @@ static pa_bluetooth_form_factor_t form_factor_from_class(uint32_t class_of_devic
         [10] = PA_BLUETOOTH_FORM_FACTOR_HIFI
     };
 
-    /*
-     * See Bluetooth Assigned Numbers:
-     * https://www.bluetooth.org/Technical/AssignedNumbers/baseband.htm
+    /* Class of device field format:
+     * Bits 0-1: Format type ("00", only one format defined so far)
+     * Bits 2-7: Minor device class
+     * Bits 8-12: Major device class
+     * Bits 13-23: Service classes
      */
     major = (class_of_device >> 8) & 0x1F;
     minor = (class_of_device >> 2) & 0x3F;
