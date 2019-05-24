@@ -159,6 +159,7 @@ typedef enum pa_bluetooth_form_factor {
     PA_BLUETOOTH_FORM_FACTOR_CAR,
     PA_BLUETOOTH_FORM_FACTOR_HIFI,
     PA_BLUETOOTH_FORM_FACTOR_PHONE,
+    PA_BLUETOOTH_FORM_FACTOR_COMPUTER,
 } pa_bluetooth_form_factor_t;
 
 /* Run from main thread */
@@ -177,14 +178,18 @@ static pa_bluetooth_form_factor_t form_factor_from_class(uint32_t class_of_devic
         [10] = PA_BLUETOOTH_FORM_FACTOR_HIFI
     };
 
-    /*
-     * See Bluetooth Assigned Numbers:
-     * https://www.bluetooth.org/Technical/AssignedNumbers/baseband.htm
+    /* Class of device field format:
+     * Bits 0-1: Format type ("00", only one format defined so far)
+     * Bits 2-7: Minor device class
+     * Bits 8-12: Major device class
+     * Bits 13-23: Service classes
      */
     major = (class_of_device >> 8) & 0x1F;
     minor = (class_of_device >> 2) & 0x3F;
 
     switch (major) {
+        case 1:
+            return PA_BLUETOOTH_FORM_FACTOR_COMPUTER;
         case 2:
             return PA_BLUETOOTH_FORM_FACTOR_PHONE;
         case 4:
@@ -225,6 +230,8 @@ static const char *form_factor_to_string(pa_bluetooth_form_factor_t ff) {
             return "hifi";
         case PA_BLUETOOTH_FORM_FACTOR_PHONE:
             return "phone";
+        case PA_BLUETOOTH_FORM_FACTOR_COMPUTER:
+            return "computer";
     }
 
     pa_assert_not_reached();
@@ -1934,6 +1941,11 @@ static void create_card_ports(struct userdata *u, pa_hashmap *ports) {
         case PA_BLUETOOTH_FORM_FACTOR_PHONE:
             name_prefix = "phone";
             input_description = output_description = _("Phone");
+            break;
+
+        case PA_BLUETOOTH_FORM_FACTOR_COMPUTER:
+            name_prefix = "computer";
+            input_description = output_description = _("Computer");
             break;
 
         case PA_BLUETOOTH_FORM_FACTOR_UNKNOWN:
