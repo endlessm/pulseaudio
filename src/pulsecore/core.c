@@ -311,12 +311,12 @@ static int compare_sinks(pa_sink *a, pa_sink *b) {
 }
 
 void pa_core_update_default_sink(pa_core *core) {
-    pa_sink *best, *old, *sink;
+    pa_sink *best = NULL;
+    pa_sink *sink;
     uint32_t idx;
+    pa_sink *old;
 
     pa_assert(core);
-
-    best = old = core->default_sink;
 
     PA_IDXSET_FOREACH(sink, core->sinks, idx) {
         if (!PA_SINK_IS_LINKED(sink->state))
@@ -330,6 +330,8 @@ void pa_core_update_default_sink(pa_core *core) {
         if (compare_sinks(sink, best) > 0)
             best = sink;
     }
+
+    old = core->default_sink;
 
     if (best == old)
         return;
@@ -396,12 +398,12 @@ static int compare_sources(pa_source *a, pa_source *b) {
 }
 
 void pa_core_update_default_source(pa_core *core) {
-    pa_source *best, *old, *source;
+    pa_source *best = NULL;
+    pa_source *source;
     uint32_t idx;
+    pa_source *old;
 
     pa_assert(core);
-
-    best = old = core->default_source;
 
     PA_IDXSET_FOREACH(source, core->sources, idx) {
         if (!PA_SOURCE_IS_LINKED(source->state))
@@ -415,6 +417,8 @@ void pa_core_update_default_source(pa_core *core) {
         if (compare_sources(source, best) > 0)
             best = source;
     }
+
+    old = core->default_source;
 
     if (best == old)
         return;
