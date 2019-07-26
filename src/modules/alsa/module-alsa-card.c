@@ -423,9 +423,12 @@ static int report_jack_state(snd_mixer_elem_t *melem, unsigned int mask) {
     for (tp = tports; tp->port; tp++)
         if (tp->avail != PA_AVAILABLE_NO) {
             /* Re-probe HDMI ports to learn what the connected HDMI device supports */
-            if (pa_strneq(tp->port->name, "hdmi-output-", strlen("hdmi-output-")))
+            if (pa_strneq(tp->port->name, "hdmi-output-", strlen("hdmi-output-"))) {
+                pa_log_debug("HDMI jack state changed, re-probing profile set");
+                u->profile_set->probed = false;
                 pa_alsa_profile_set_probe(u->profile_set, u->device_id, &u->core->default_sample_spec,
                                           u->core->default_n_fragments, u->core->default_fragment_size_msec);
+            }
             pa_device_port_set_available(tp->port, tp->avail);
         }
     for (tp = tports; tp->port; tp++)
