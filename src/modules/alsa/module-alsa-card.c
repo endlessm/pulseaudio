@@ -247,10 +247,15 @@ static int card_set_profile(pa_card *c, pa_card_profile *new_profile) {
     if (nd->profile && nd->profile->output_mappings)
         PA_IDXSET_FOREACH(am, nd->profile->output_mappings, idx) {
 
-            if (!am->sink)
+            if (!am->sink) {
                 am->sink = pa_alsa_sink_new(c->module, u->modargs, __FILE__, c, am);
+                if (!am->sink) {
+                    ret = -1;
+                    goto finish;
+                }
+            }
 
-            if (sink_inputs && am->sink) {
+            if (sink_inputs) {
                 pa_sink_move_all_finish(am->sink, sink_inputs, false);
                 sink_inputs = NULL;
             }
@@ -259,10 +264,15 @@ static int card_set_profile(pa_card *c, pa_card_profile *new_profile) {
     if (nd->profile && nd->profile->input_mappings)
         PA_IDXSET_FOREACH(am, nd->profile->input_mappings, idx) {
 
-            if (!am->source)
+            if (!am->source) {
                 am->source = pa_alsa_source_new(c->module, u->modargs, __FILE__, c, am);
+                if (!am->source) {
+                    ret = -1;
+                    goto finish;
+                }
+            }
 
-            if (source_outputs && am->source) {
+            if (source_outputs) {
                 pa_source_move_all_finish(am->source, source_outputs, false);
                 source_outputs = NULL;
             }
