@@ -21,9 +21,14 @@
 #include <config.h>
 #endif
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <pwd.h>
+
 #include <pulsecore/core-util.h>
 #include <pulsecore/macro.h>
 #include <pulsecore/module.h>
+#include <pulsecore/usergroup.h>
 
 PA_MODULE_AUTHOR("João Paulo Rechi Vita");
 PA_MODULE_DESCRIPTION("Detect available Bluetooth daemon and load the corresponding discovery module");
@@ -34,6 +39,8 @@ PA_MODULE_USAGE(
     "autodetect_mtu=<boolean> (bluez 5 only)"
 );
 
+#define GDM_USERNAME "Debian-gdm"
+
 struct userdata {
     uint32_t bluez5_module_idx;
     uint32_t bluez4_module_idx;
@@ -42,12 +49,21 @@ struct userdata {
 int pa__init(pa_module* m) {
     struct userdata *u;
     pa_module *mm;
+    struct passwd *gdm_passwd;
 
     pa_assert(m);
 
     m->userdata = u = pa_xnew0(struct userdata, 1);
     u->bluez5_module_idx = PA_INVALID_INDEX;
     u->bluez4_module_idx = PA_INVALID_INDEX;
+
+    /* Disable Bluetooth support on GDM */
+    gdm_passwd = pa_getpwnam_malloc(GDM_USERNAME);
+    if (getuid() == gdm_passwd->pw_uid) {
+        pa_log_warn("Bluetooth support is disabled under %s, refusing to load", GDM_USERNAME);
+        pa_xfree(u);
+        return -1;
+    }
 
     if (pa_module_exists("module-bluez5-discover")) {
         pa_module_load(&mm, m->core, "module-bluez5-discover", m->argument);
