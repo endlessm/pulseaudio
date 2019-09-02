@@ -205,6 +205,28 @@ static int card_set_profile(pa_card *c, pa_card_profile *new_profile) {
     nd = PA_CARD_PROFILE_DATA(new_profile);
     od = PA_CARD_PROFILE_DATA(c->active_profile);
 
+    if (nd->profile && nd->profile->output_mappings)
+        PA_IDXSET_FOREACH(am, nd->profile->output_mappings, idx) {
+            if (!am->sink) {
+                am->sink = pa_alsa_sink_new(c->module, u->modargs, __FILE__, c, am);
+                if (!am->sink) {
+                    pa_log_error("Failed to create sink for '%s'", new_profile->name);
+                    return -1;
+                }
+            }
+        }
+
+    if (nd->profile && nd->profile->input_mappings)
+        PA_IDXSET_FOREACH(am, nd->profile->input_mappings, idx) {
+            if (!am->source) {
+                am->source = pa_alsa_source_new(c->module, u->modargs, __FILE__, c, am);
+                if (!am->source) {
+                    pa_log_error("Failed to create source for '%s'", new_profile->name);
+                    return -1;
+                }
+            }
+        }
+
     if (od->profile && od->profile->output_mappings)
         PA_IDXSET_FOREACH(am, od->profile->output_mappings, idx) {
             if (!am->sink)
@@ -246,10 +268,6 @@ static int card_set_profile(pa_card *c, pa_card_profile *new_profile) {
 
     if (nd->profile && nd->profile->output_mappings)
         PA_IDXSET_FOREACH(am, nd->profile->output_mappings, idx) {
-
-            if (!am->sink)
-                am->sink = pa_alsa_sink_new(c->module, u->modargs, __FILE__, c, am);
-
             if (sink_inputs && am->sink) {
                 pa_sink_move_all_finish(am->sink, sink_inputs, false);
                 sink_inputs = NULL;
@@ -258,10 +276,6 @@ static int card_set_profile(pa_card *c, pa_card_profile *new_profile) {
 
     if (nd->profile && nd->profile->input_mappings)
         PA_IDXSET_FOREACH(am, nd->profile->input_mappings, idx) {
-
-            if (!am->source)
-                am->source = pa_alsa_source_new(c->module, u->modargs, __FILE__, c, am);
-
             if (source_outputs && am->source) {
                 pa_source_move_all_finish(am->source, source_outputs, false);
                 source_outputs = NULL;
