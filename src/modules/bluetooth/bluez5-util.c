@@ -90,6 +90,7 @@ struct pa_bluetooth_discovery {
     pa_hashmap *adapters;
     pa_hashmap *devices;
     pa_hashmap *transports;
+    pa_bluetooth_profile_status_t profiles_status[PA_BLUETOOTH_PROFILE_COUNT];
 
     pa_hashmap *disabled_profiles; /* pa_bluetooth_profile_t -> pa_bluetooth_profile_t (hashmap-as-a-set) */
 
@@ -138,6 +139,14 @@ static const char *check_variant_property(DBusMessageIter *i) {
     }
 
     return key;
+}
+
+pa_bluetooth_profile_status_t profile_status_get(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile) {
+    return y->profiles_status[profile];
+}
+
+void profile_status_set(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile, pa_bluetooth_profile_status_t status) {
+    y->profiles_status[profile] = status;
 }
 
 pa_bluetooth_transport *pa_bluetooth_transport_new(pa_bluetooth_device *d, const char *owner, const char *path,
@@ -895,6 +904,7 @@ static void parse_adapter_properties(pa_bluetooth_adapter *a, DBusMessageIter *i
                     pa_log_debug("%s: %s", key, value);
                     dbus_message_iter_next(&ai);
                 }
+                pa_hook_fire(pa_bluetooth_discovery_hook(a->discovery, PA_BLUETOOTH_HOOK_ADAPTER_UUIDS_CHANGED), a);
             }
         }
 

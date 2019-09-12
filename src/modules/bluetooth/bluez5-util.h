@@ -43,6 +43,7 @@ typedef struct pa_bluetooth_discovery pa_bluetooth_discovery;
 typedef struct pa_bluetooth_backend pa_bluetooth_backend;
 
 typedef enum pa_bluetooth_hook {
+    PA_BLUETOOTH_HOOK_ADAPTER_UUIDS_CHANGED,              /* Call data: pa_bluetooth_adapter */
     PA_BLUETOOTH_HOOK_DEVICE_CONNECTION_CHANGED,          /* Call data: pa_bluetooth_device */
     PA_BLUETOOTH_HOOK_TRANSPORT_STATE_CHANGED,            /* Call data: pa_bluetooth_transport */
     PA_BLUETOOTH_HOOK_TRANSPORT_MICROPHONE_GAIN_CHANGED,  /* Call data: pa_bluetooth_transport */
@@ -58,6 +59,13 @@ typedef enum profile {
     PA_BLUETOOTH_PROFILE_OFF
 } pa_bluetooth_profile_t;
 #define PA_BLUETOOTH_PROFILE_COUNT PA_BLUETOOTH_PROFILE_OFF
+
+typedef enum pa_bluetooth_profile_status {
+  PA_BLUETOOTH_PROFILE_STATUS_INACTIVE,
+  PA_BLUETOOTH_PROFILE_STATUS_ACTIVE,
+  PA_BLUETOOTH_PROFILE_STATUS_REGISTERING,
+  PA_BLUETOOTH_PROFILE_STATUS_REGISTERED
+} pa_bluetooth_profile_status_t;
 
 typedef enum pa_bluetooth_transport_state {
     PA_BLUETOOTH_TRANSPORT_STATE_DISCONNECTED,
@@ -147,6 +155,9 @@ static inline pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, 
 static inline void pa_bluetooth_native_backend_free(pa_bluetooth_backend *b) {}
 static inline void pa_bluetooth_native_backend_enable_hs_role(pa_bluetooth_backend *b, bool enable_hs_role) {}
 #endif
+
+pa_bluetooth_profile_status_t profile_status_get(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile);
+void profile_status_set(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile, pa_bluetooth_profile_status_t status);
 
 pa_bluetooth_transport *pa_bluetooth_transport_new(pa_bluetooth_device *d, const char *owner, const char *path,
                                                    pa_bluetooth_profile_t p, const uint8_t *config, size_t size);
