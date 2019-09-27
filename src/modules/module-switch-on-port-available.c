@@ -180,12 +180,13 @@ static int try_to_switch_profile(pa_device_port *port) {
 }
 
 struct port_pointers {
-    pa_device_port *port;
-    pa_sink *sink;
-    pa_source *source;
+    pa_device_port *port, *preferred_port;
+    pa_sink *sink, *preferred_port_sink;
+    pa_source *source, *preferred_port_source;
     bool is_possible_profile_active;
     bool is_preferred_profile_active;
     bool is_port_active;
+    bool is_preferred_port_active;
 };
 
 static const char* profile_name_for_dir(pa_card_profile *cp, pa_direction_t dir) {
@@ -200,21 +201,33 @@ static struct port_pointers find_port_pointers(pa_device_port *port) {
     struct port_pointers pp = { .port = port };
     uint32_t state;
     pa_card *card;
+    pa_sink *sink;
+    pa_source *source;
 
     pa_assert(port);
     pa_assert_se(card = port->card);
 
     switch (port->direction) {
         case PA_DIRECTION_OUTPUT:
-            PA_IDXSET_FOREACH(pp.sink, card->sinks, state)
-                if (port == pa_hashmap_get(pp.sink->ports, port->name))
-                    break;
+            pp.preferred_port = card->preferred_output_port;
+            PA_IDXSET_FOREACH(sink, card->sinks, state) {
+                if (!pp.sink && port == pa_hashmap_get(sink->ports, port->name))
+                    pp.sink = sink;
+                if (pp.preferred_port && !pp.preferred_port_sink &&
+                    pp.preferred_port == pa_hashmap_get(sink->ports, pp.preferred_port->name))
+                    pp.preferred_port_sink = sink;
+            }
             break;
 
         case PA_DIRECTION_INPUT:
-            PA_IDXSET_FOREACH(pp.source, card->sources, state)
-                if (port == pa_hashmap_get(pp.source->ports, port->name))
-                    break;
+            pp.preferred_port = card->preferred_input_port;
+            PA_IDXSET_FOREACH(source, card->sources, state) {
+                if (!pp.source && port == pa_hashmap_get(source->ports, port->name))
+                    pp.source = source;
+                if (pp.preferred_port && !pp.preferred_port_source &&
+                    pp.preferred_port == pa_hashmap_get(source->ports, pp.preferred_port->name))
+                    pp.preferred_port_source = source;
+            }
             break;
     }
 
@@ -223,6 +236,9 @@ static struct port_pointers find_port_pointers(pa_device_port *port) {
     pp.is_preferred_profile_active = pp.is_possible_profile_active && (!port->preferred_profile ||
         pa_safe_streq(port->preferred_profile, profile_name_for_dir(card->active_profile, port->direction)));
     pp.is_port_active = (pp.sink && pp.sink->active_port == port) || (pp.source && pp.source->active_port == port);
+    pp.is_preferred_port_active = (pp.preferred_port_sink && pp.preferred_port->available != PA_AVAILABLE_NO &&
+        pp.preferred_port_sink->active_port == pp.preferred_port) ||
+        (pp.preferred_port_source && pp.preferred_port_source->active_port == pp.preferred_port);
 
     return pp;
 }
@@ -233,6 +249,11 @@ static void switch_to_port(pa_device_port *port) {
 
     if (pp.is_port_active)
         return; /* Already selected */
+
+    if (pp.is_preferred_port_active) {
+        pa_log_debug("Not switching away from user-selected port %s", pp.preferred_port->name);
+        return;
+    }
 
     pa_log_debug("Trying to switch to port %s", port->name);
     if (!pp.is_preferred_profile_active) {
@@ -271,7 +292,7 @@ static void switch_from_port(pa_device_port *port) {
         if (p->direction != port->direction)
             continue;
 
-        if (!best_port || best_port->priority < p->priority)
+        if (!best_port || (best_port != pp.preferred_port && best_port->priority < p->priority))
            best_port = p;
     }
 
