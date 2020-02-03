@@ -8,6 +8,7 @@ usr/bin/parecord
 usr/bin/padsp
 usr/bin/pax11publish
 usr/bin/pasuspender
+usr/bin/pa-info
 usr/share/man/man1/pacat.1
 usr/share/man/man1/pacmd.1
 usr/share/man/man1/pactl.1

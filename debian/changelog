@@ -1,11 +1,149 @@
-pulseaudio (1:12.0-1) master; urgency=medium
+pulseaudio (13.0-4) unstable; urgency=medium
 
-  * Bump the epoch.
+  [ Steve Langasek ]
+  * Make autopkgtests cross-test-friendly.
+    In Ubuntu, we are in the process of moving the i386 architecture to a
+    compatibility-only layer on amd64, and therefore we are also moving our
+    autopkgtest infrastructure to test i386 binaries in a cross-environment.
+    This requires changes to some tests so that they are cross-aware and can do
+    the right thing.
+    The pulseaudio tests currently fail in this environment, because they are
+    build tests that do not invoke the toolchain in a cross-aware manner.  I've
+    verified that the attached patch lets the tests successfully build (and run)
+    i386 tests on an amd64 host.
+    Note that upstream autopkgtest doesn't currently set DEB_HOST_ARCH so this
+    is a complete no-op in Debian for the moment.  Support for cross-testing in
+    autopkgtest is currently awaiting review at
+    https://salsa.debian.org/ci-team/autopkgtest/merge_requests/69 and once
+    landed, will still have no effect unless autopkgtest is invoked with a '-a'
+    option.  So this change should be safe to land in your package despite this
+    not being upstream in autopkgtest. (Closes: #946375)
 
-    We need to carry the epoch of 1 in our version because we used to be based
-    on Ubuntu's package, which has an epoch of 1.
+  [ Felipe Sateler ]
+  * Enable autospawn automatically on sysvinit systems.
+    Instead of having a default configuration, make pulseaudio default to
+    disabled, and then have a sysvinit service to reenable the autospawn
+    setting
+    (Closes: #923203)
+  * Allow installing pulseaudio with elogind.
+    Because we now autospawn with non-systemd, we can use the weaker guarantees
+    provided by elogind
+    (Closes: #923201)
+  * Drop postinst snippet dealing with old upgrades.
+    5.0 is already in oldoldstable so no need to carry it anymore
+  * Set upstream metadata fields: Name (from ./configure), Repository,
+    Repository-Browse.
+    Fixes: lintian: upstream-metadata-file-is-missing
+    See-also: https://lintian.debian.org/tags/upstream-metadata-file-is-missing.html
+  * Bump Standards-Version.
+    No changes needed
+  * Enable the systemd user units dynamically, not statically.
+    Now that there is support for systemd --user in debhelper, lets use that to
+    enable the user units instead of having a global link (Closes: #943999)
 
- -- João Paulo Rechi Vita <jprvita@endlessm.com>  Mon, 27 Jun 2018 08:18:00 -0700
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 31 Jan 2020 09:24:15 -0300
+
+pulseaudio (13.0-3) unstable; urgency=medium
+
+  * qpaeq: migrate to python3.
+    Patch picked from Fedora and cleaned up for upstream inclusion.
+    (Closes: #937338)
+  * d/control: Remove duplicate Priority: field
+  * Add dev package information to symbols file.
+    Thanks lintian tag symbols-file-missing-build-depends-package-field
+  * Pick upstream patch disabling flat-volumes by default.
+    (Closes: #837637, #541538)
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 25 Oct 2019 09:00:30 -0300
+
+pulseaudio (13.0-2) unstable; urgency=medium
+
+  [ Andreas Henriksson ]
+  * Drop obsolete gconf build-dependency.
+    The package already builds with --disable-gconf configure flag.
+    (Closes: #941794)
+
+  [ Felipe Sateler ]
+  * Use https URI in Homepage field.
+  * Bump Standards-Version
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 06 Oct 2019 19:50:40 -0300
+
+pulseaudio (13.0-1) unstable; urgency=medium
+
+  * New upstream version
+  * debian/pulseaudio-utils.install:
+    - install the new pa-info utility
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Mon, 16 Sep 2019 15:06:43 +0200
+
+pulseaudio (12.99.2-1) unstable; urgency=medium
+
+  * New upstream version 12.99.2
+    - Fixes FTBFS with gcc-9. (Closes: #925807)
+    - Drop all patches, applied upstream
+    - Add new symbols added to libpulse0
+  * Remove autopoint override.
+    Since version 12, regular intltool is used, not gtkdocize
+  * Bump debhelper compat level to 12
+
+ -- Felipe Sateler <fsateler@debian.org>  Wed, 21 Aug 2019 22:10:51 -0400
+
+pulseaudio (12.2-5) unstable; urgency=medium
+
+  * Pick upstream patch fixing mute state restoring (Closes: #913102)
+
+ -- Felipe Sateler <fsateler@debian.org>  Sun, 04 Aug 2019 21:18:02 -0400
+
+pulseaudio (12.2-4) unstable; urgency=medium
+
+  [ Jan Graichen ]
+  * Load correct profile for Arctis 7 and Arctis Pro headsets.
+    (Closes: #918067)
+
+ -- Felipe Sateler <fsateler@debian.org>  Thu, 14 Feb 2019 20:05:41 -0300
+
+pulseaudio (12.2-3) unstable; urgency=medium
+
+  [ Joseph Herlant ]
+  * d/changelog & d/control: Remove trailing whitespaces
+
+  [ Felipe Sateler ]
+  * Backport upstream patches for better Arctis headset support
+    (Closes: #918067)
+  * Ship link from /etc/alsa/conf.d/pulse.conf to /usr/share/alsa/alsa.conf.d/pulse.conf.
+    Upstream alsa decided to stop supporting the /usr path (Closes: #915696)
+  * Don't compile with -ffast-math.
+    This flag results in calls to (at least) isfinite() and isnan() becoming
+    skipped, and a constant false returned. (Closes: #916504)
+
+ -- Felipe Sateler <fsateler@debian.org>  Tue, 15 Jan 2019 21:58:48 -0300
+
+pulseaudio (12.2-2) unstable; urgency=medium
+
+  [ Joseph Herlant ]
+  * Allow rounding without having to allow a random number of errors in
+    tests/volume-test.c (Closes: #906504)
+
+  [ Felipe Sateler ]
+  * Bump debhelper compat level to 11.
+    Also switch to the new debhelper-compat virtual package
+  * Bump Standards-Version
+
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 14 Sep 2018 20:16:14 -0300
+
+pulseaudio (12.2-1) unstable; urgency=medium
+
+  [ Felipe Sateler ]
+  * New upstream version 12.2
+  * Do not build esound compatibility anymore.
+    Esound will not be part of buster, so no need to have the compat code built.
+    (Closes: #561780)
+
+  [ Joseph Herlant ]
+  * Add patch to allow a higher deviation for volume-test.c (Closes: #906504)
+
+ -- Felipe Sateler <fsateler@debian.org>  Thu, 06 Sep 2018 10:46:33 -0300
 
 pulseaudio (12.0-1) unstable; urgency=medium
 
@@ -1652,4 +1790,3 @@ pulseaudio (0.9.5-1) unstable; urgency=low
   * Initial release (Closes: #378626)
 
  -- CJ van den Berg <cj@vdbonline.com>  Mon, 28 Aug 2006 00:31:10 +0200
-

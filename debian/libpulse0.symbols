@@ -1,4 +1,5 @@
 libpulse-simple.so.0 libpulse0 #MINVER#
+* Build-Depends-Package: libpulse-dev
  PULSE_0@PULSE_0 0.99.1
  pa_simple_drain@PULSE_0 0.99.1
  pa_simple_flush@PULSE_0 0.99.1
@@ -8,6 +9,7 @@ libpulse-simple.so.0 libpulse0 #MINVER#
  pa_simple_read@PULSE_0 0.99.1
  pa_simple_write@PULSE_0 0.99.1
 libpulse.so.0 libpulse0 #MINVER#
+* Build-Depends-Package: libpulse-dev
  PULSE_0@PULSE_0 0.99.1
  pa_ascii_filter@PULSE_0 0.99.1
  pa_ascii_valid@PULSE_0 0.99.1
@@ -187,12 +189,16 @@ libpulse.so.0 libpulse0 #MINVER#
  pa_format_info_free_string_array@PULSE_0 2.0
  pa_format_info_from_sample_spec@PULSE_0 0.99.4
  pa_format_info_from_string@PULSE_0 0.99.4
+ pa_format_info_get_channel_map@PULSE_0 12.99.2
+ pa_format_info_get_channels@PULSE_0 12.99.2
  pa_format_info_get_prop_int@PULSE_0 2.0
  pa_format_info_get_prop_int_array@PULSE_0 2.0
  pa_format_info_get_prop_int_range@PULSE_0 2.0
  pa_format_info_get_prop_string@PULSE_0 2.0
  pa_format_info_get_prop_string_array@PULSE_0 2.0
  pa_format_info_get_prop_type@PULSE_0 2.0
+ pa_format_info_get_rate@PULSE_0 12.99.2
+ pa_format_info_get_sample_format@PULSE_0 12.99.2
  pa_format_info_is_compatible@PULSE_0 0.99.4
  pa_format_info_is_pcm@PULSE_0 0.99.4
  pa_format_info_new@PULSE_0 0.99.4
@@ -347,6 +353,7 @@ libpulse.so.0 libpulse0 #MINVER#
  pa_sw_volume_snprint_dB@PULSE_0 0.99.1
  pa_sw_volume_to_dB@PULSE_0 0.99.1
  pa_sw_volume_to_linear@PULSE_0 0.99.1
+ pa_thread_make_realtime@PULSE_0 12.99.2
  pa_threaded_mainloop_accept@PULSE_0 0.99.1
  pa_threaded_mainloop_free@PULSE_0 0.99.1
  pa_threaded_mainloop_get_api@PULSE_0 0.99.1
@@ -354,6 +361,7 @@ libpulse.so.0 libpulse0 #MINVER#
  pa_threaded_mainloop_in_thread@PULSE_0 0.99.1
  pa_threaded_mainloop_lock@PULSE_0 0.99.1
  pa_threaded_mainloop_new@PULSE_0 0.99.1
+ pa_threaded_mainloop_once_unlocked@PULSE_0 12.99.2
  pa_threaded_mainloop_set_name@PULSE_0 5.0
  pa_threaded_mainloop_signal@PULSE_0 0.99.1
  pa_threaded_mainloop_start@PULSE_0 0.99.1

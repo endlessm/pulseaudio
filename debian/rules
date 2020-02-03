@@ -8,8 +8,6 @@ DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 include /usr/share/dpkg/default.mk
 
-export AUTOPOINT=intltoolize --automake --copy
-
 # Needed for testsuite
 export XDG_RUNTIME_DIR = $(CURDIR)/debian/tmp/tmp/xdgruntimedir
 export CK_TIMEOUT_MULTIPLIER = 0
@@ -23,6 +21,7 @@ DEB_CONFIGURE_EXTRA_FLAGS = --enable-x11 --disable-hal-compat \
   --with-bash-completion-dir=\$${datadir}/bash-completion/completions \
   --with-systemduserunitdir=\$${prefix}/lib/systemd/user \
   --disable-bluez4 \
+  --disable-esound \
   --enable-gsettings \
   --disable-gconf
 
@@ -62,11 +61,8 @@ override_dh_shlibdeps:
 override_dh_missing:
 	dh_missing --fail-missing
 
-override_dh_link:
-	dh_link
-ifeq ($(DEB_HOST_ARCH_OS),linux)
-	dh_link usr/lib/systemd/user/pulseaudio.socket usr/lib/systemd/user/sockets.target.wants/pulseaudio.socket
-endif
+override_dh_installinit:
+	dh_installinit -ppulseaudio --name=pulseaudio-enable-autospawn
 
 override_dh_installdocs:
 	dh_installdocs -A NEWS README
