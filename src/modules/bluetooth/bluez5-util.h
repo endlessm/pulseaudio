@@ -184,6 +184,7 @@ pa_hook* pa_bluetooth_discovery_hook(pa_bluetooth_discovery *y, pa_bluetooth_hoo
 bool pa_bluetooth_profile_is_disabled(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile);
 void pa_bluetooth_profile_disable(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile);
 const char *pa_bluetooth_profile_to_string(pa_bluetooth_profile_t profile);
+int pa_bluetooth_profile_from_string(const char *profile_name, pa_bluetooth_profile_t *profile);
 
 static inline bool pa_bluetooth_uuid_is_hsp_hs(const char *uuid) {
     return pa_streq(uuid, PA_BLUETOOTH_UUID_HSP_HS) || pa_streq(uuid, PA_BLUETOOTH_UUID_HSP_HS_ALT);
