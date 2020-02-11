@@ -32,6 +32,7 @@ PA_MODULE_LOAD_ONCE(true);
 PA_MODULE_USAGE(
     "headset=ofono|native|auto"
     "autodetect_mtu=<boolean>"
+    "disable_profiles=<comma-separated list of card profiles to disable>"
 );
 
 struct userdata {

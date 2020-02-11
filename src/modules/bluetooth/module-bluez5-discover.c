@@ -37,11 +37,13 @@ PA_MODULE_LOAD_ONCE(true);
 PA_MODULE_USAGE(
     "headset=ofono|native|auto"
     "autodetect_mtu=<boolean>"
+    "disable_profiles=<comma-separated list of card profiles to disable>"
 );
 
 static const char* const valid_modargs[] = {
     "headset",
     "autodetect_mtu",
+    "disable_profiles",
     NULL
 };
 
@@ -100,7 +102,7 @@ const char *default_headset_backend = "ofono";
 int pa__init(pa_module *m) {
     struct userdata *u;
     pa_modargs *ma;
-    const char *headset_str;
+    const char *headset_str, *disable_profiles;
     int headset_backend;
     bool autodetect_mtu;
 
@@ -137,6 +139,23 @@ int pa__init(pa_module *m) {
 
     if (!(u->discovery = pa_bluetooth_discovery_get(u->core, headset_backend)))
         goto fail;
+
+    disable_profiles = pa_modargs_get_value(ma, "disable_profiles", NULL);
+    if (disable_profiles) {
+        const char *state = NULL;
+        char *profile_name;
+        pa_bluetooth_profile_t profile;
+
+        while ((profile_name = pa_split(disable_profiles, ",", &state))) {
+            if (pa_bluetooth_profile_from_string(profile_name, &profile) < 0)
+                pa_log_warn("Failed to disable unknown profile \"%s\"", profile_name);
+            else {
+                pa_log_info("Disabling profile \"%s\"", profile_name);
+                pa_bluetooth_profile_disable(u->discovery, profile);
+            }
+            pa_xfree(profile_name);
+        }
+    }
 
     u->device_connection_changed_slot =
         pa_hook_connect(pa_bluetooth_discovery_hook(u->discovery, PA_BLUETOOTH_HOOK_DEVICE_CONNECTION_CHANGED),
