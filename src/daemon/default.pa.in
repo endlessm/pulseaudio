@@ -83,7 +83,7 @@ load-module module-bluetooth-policy
 .endif
 
 .ifexists module-bluetooth-discover@PA_SOEXT@
-load-module module-bluetooth-discover
+load-module module-bluetooth-discover disable_profiles="a2dp_source"
 .endif
 ])dnl
 
