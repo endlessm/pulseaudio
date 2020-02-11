@@ -1366,6 +1366,23 @@ const char *pa_bluetooth_profile_to_string(pa_bluetooth_profile_t profile) {
     return NULL;
 }
 
+int pa_bluetooth_profile_from_string(const char *profile_name, pa_bluetooth_profile_t *profile) {
+    if (pa_streq(profile_name, "a2dp_sink"))
+        *profile = PA_BLUETOOTH_PROFILE_A2DP_SINK;
+    else if (pa_streq(profile_name, "a2dp_source"))
+        *profile = PA_BLUETOOTH_PROFILE_A2DP_SOURCE;
+    else if (pa_streq(profile_name, "headset_head_unit"))
+        *profile = PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT;
+    else if (pa_streq(profile_name, "headset_audio_gateway"))
+        *profile = PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY;
+    else if (pa_streq(profile_name, "off"))
+        *profile = PA_BLUETOOTH_PROFILE_OFF;
+    else
+        return -1;
+
+    return 0;
+}
+
 static const pa_a2dp_codec *a2dp_endpoint_to_a2dp_codec(const char *endpoint) {
     const char *codec_name;
 
