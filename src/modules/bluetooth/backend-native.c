@@ -42,6 +42,7 @@ struct pa_bluetooth_backend {
   pa_bluetooth_discovery *discovery;
   pa_hook_slot *adapter_uuids_changed_slot;
   bool enable_hs_role;
+  bool enable_ag_role;
 
   PA_LLIST_HEAD(pa_dbus_pending, pending);
 };
@@ -702,7 +703,7 @@ void pa_bluetooth_native_backend_enable_hs_role(pa_bluetooth_backend *native_bac
    native_backend->enable_hs_role = enable_hs_role;
 }
 
-pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_discovery *y, bool enable_hs_role) {
+pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_discovery *y, bool enable_hs_role, bool enable_ag_role) {
     pa_bluetooth_backend *backend;
     DBusError err;
 
@@ -721,6 +722,7 @@ pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_d
 
     backend->discovery = y;
     backend->enable_hs_role = enable_hs_role;
+    backend->enable_ag_role = enable_ag_role;
 
     backend->adapter_uuids_changed_slot =
         pa_hook_connect(pa_bluetooth_discovery_hook(y, PA_BLUETOOTH_HOOK_ADAPTER_UUIDS_CHANGED), PA_HOOK_NORMAL,
@@ -728,7 +730,8 @@ pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_d
 
     if (enable_hs_role)
        profile_init(backend, PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY);
-    profile_init(backend, PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT);
+    if (enable_ag_role)
+       profile_init(backend, PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT);
 
     return backend;
 }
@@ -743,7 +746,8 @@ void pa_bluetooth_native_backend_free(pa_bluetooth_backend *backend) {
 
     if (backend->enable_hs_role)
        profile_done(backend, PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY);
-    profile_done(backend, PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT);
+    if (backend->enable_ag_role)
+       profile_done(backend, PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT);
 
     pa_dbus_connection_unref(backend->connection);
 
