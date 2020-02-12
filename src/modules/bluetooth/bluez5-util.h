@@ -181,6 +181,8 @@ pa_bluetooth_device* pa_bluetooth_discovery_get_device_by_address(pa_bluetooth_d
 
 pa_hook* pa_bluetooth_discovery_hook(pa_bluetooth_discovery *y, pa_bluetooth_hook_t hook);
 
+bool pa_bluetooth_profile_is_disabled(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile);
+void pa_bluetooth_profile_disable(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile);
 const char *pa_bluetooth_profile_to_string(pa_bluetooth_profile_t profile);
 
 static inline bool pa_bluetooth_uuid_is_hsp_hs(const char *uuid) {
