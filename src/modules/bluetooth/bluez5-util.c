@@ -92,6 +92,8 @@ struct pa_bluetooth_discovery {
     pa_hashmap *transports;
     pa_bluetooth_profile_status_t profiles_status[PA_BLUETOOTH_PROFILE_COUNT];
 
+    pa_hashmap *disabled_profiles; /* pa_bluetooth_profile_t -> pa_bluetooth_profile_t (hashmap-as-a-set) */
+
     int headset_backend;
     pa_bluetooth_backend *ofono_backend, *native_backend;
     PA_LLIST_HEAD(pa_dbus_pending, pending);
@@ -1320,6 +1322,14 @@ fail:
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+bool pa_bluetooth_profile_is_disabled(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile) {
+    return !!pa_hashmap_get(y->disabled_profiles, PA_UINT32_TO_PTR(profile));
+}
+
+void pa_bluetooth_profile_disable(pa_bluetooth_discovery *y, pa_bluetooth_profile_t profile) {
+    pa_hashmap_put(y->disabled_profiles, PA_UINT32_TO_PTR(profile), PA_UINT32_TO_PTR(profile));
+}
+
 const char *pa_bluetooth_profile_to_string(pa_bluetooth_profile_t profile) {
     switch(profile) {
         case PA_BLUETOOTH_PROFILE_A2DP_SINK:
@@ -1660,6 +1670,7 @@ pa_bluetooth_discovery* pa_bluetooth_discovery_get(pa_core *c, int headset_backe
     y->devices = pa_hashmap_new_full(pa_idxset_string_hash_func, pa_idxset_string_compare_func, NULL,
                                      (pa_free_cb_t) device_free);
     y->transports = pa_hashmap_new(pa_idxset_string_hash_func, pa_idxset_string_compare_func);
+    y->disabled_profiles = pa_hashmap_new(NULL, NULL);
     PA_LLIST_HEAD_INIT(pa_dbus_pending, y->pending);
 
     for (i = 0; i < PA_BLUETOOTH_HOOK_MAX; i++)
