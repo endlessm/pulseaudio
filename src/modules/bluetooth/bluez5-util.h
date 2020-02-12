@@ -151,11 +151,11 @@ static inline void pa_bluetooth_ofono_backend_free(pa_bluetooth_backend *b) {}
 #endif
 
 #ifdef HAVE_BLUEZ_5_NATIVE_HEADSET
-pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_discovery *y, bool enable_hs_role);
+pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_discovery *y, bool enable_hs_role, bool enable_ag_role);
 void pa_bluetooth_native_backend_free(pa_bluetooth_backend *b);
 void pa_bluetooth_native_backend_enable_hs_role(pa_bluetooth_backend *b, bool enable_hs_role);
 #else
-static inline pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_discovery *y, bool enable_hs_role) {
+static inline pa_bluetooth_backend *pa_bluetooth_native_backend_new(pa_core *c, pa_bluetooth_discovery *y, bool enable_hs_role, bool enable_ag_role);
     return NULL;
 }
 static inline void pa_bluetooth_native_backend_free(pa_bluetooth_backend *b) {}
