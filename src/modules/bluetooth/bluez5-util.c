@@ -1078,7 +1078,8 @@ void pa_bluetooth_discovery_set_ofono_running(pa_bluetooth_discovery *y, bool is
     pa_assert(y);
 
     pa_log_debug("oFono is running: %s", pa_yes_no(is_running));
-    if (y->headset_backend != HEADSET_BACKEND_AUTO)
+    if (y->headset_backend != HEADSET_BACKEND_AUTO ||
+        pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY))
         return;
 
     /* If ofono starts running, all devices that might be connected to the HS role
@@ -1107,6 +1108,8 @@ static void get_managed_objects_reply(DBusPendingCall *pending, void *userdata) 
     pa_bluetooth_discovery *y;
     DBusMessage *r;
     DBusMessageIter arg_i, element_i;
+    bool enable_hs_role;
+    bool enable_ag_role;
 
     pa_assert_se(p = userdata);
     pa_assert_se(y = p->context_data);
@@ -1140,8 +1143,20 @@ static void get_managed_objects_reply(DBusPendingCall *pending, void *userdata) 
 
     y->objects_listed = true;
 
+    /* Enable the HS role from the start when only the native backend is active.
+     * Otherwise it will be enabled later in pa_bluetooth_discovery_set_ofono_running
+     * if or when oFono is not running */
+    enable_hs_role = (y->headset_backend == HEADSET_BACKEND_NATIVE);
+    if (pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_HEADSET_AUDIO_GATEWAY))
+        enable_hs_role = false;
+
+    /* Enable the AG role by default */
+    enable_ag_role = true;
+    if (pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_HEADSET_HEAD_UNIT))
+        enable_ag_role = false;
+
     if (!y->native_backend && y->headset_backend != HEADSET_BACKEND_OFONO)
-        y->native_backend = pa_bluetooth_native_backend_new(y->core, y, (y->headset_backend == HEADSET_BACKEND_NATIVE), true);
+        y->native_backend = pa_bluetooth_native_backend_new(y->core, y, enable_hs_role, enable_ag_role);
     if (!y->ofono_backend && y->headset_backend != HEADSET_BACKEND_NATIVE)
         y->ofono_backend = pa_bluetooth_ofono_backend_new(y->core, y);
 
