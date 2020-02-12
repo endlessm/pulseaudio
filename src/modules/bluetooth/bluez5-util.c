@@ -1023,8 +1023,10 @@ static void parse_interfaces_and_properties(pa_bluetooth_discovery *y, DBusMessa
              * pulseaudio does not implement yet, patches are waiting in queue */
             a2dp_codec_sbc = pa_bluetooth_get_a2dp_codec("sbc");
             pa_assert(a2dp_codec_sbc);
-            register_endpoint(y, a2dp_codec_sbc, path, A2DP_SINK_ENDPOINT "/sbc", PA_BLUETOOTH_UUID_A2DP_SINK);
-            register_endpoint(y, a2dp_codec_sbc, path, A2DP_SOURCE_ENDPOINT "/sbc", PA_BLUETOOTH_UUID_A2DP_SOURCE);
+            if (!pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_A2DP_SOURCE))
+                register_endpoint(y, a2dp_codec_sbc, path, A2DP_SINK_ENDPOINT "/sbc", PA_BLUETOOTH_UUID_A2DP_SINK);
+            if (!pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_A2DP_SINK))
+                register_endpoint(y, a2dp_codec_sbc, path, A2DP_SOURCE_ENDPOINT "/sbc", PA_BLUETOOTH_UUID_A2DP_SOURCE);
 
         } else if (pa_streq(interface, BLUEZ_DEVICE_INTERFACE)) {
 
@@ -1710,13 +1712,17 @@ pa_bluetooth_discovery* pa_bluetooth_discovery_get(pa_core *c, int headset_backe
     for (i = 0; i < count; i++) {
         a2dp_codec = pa_bluetooth_a2dp_codec_iter(i);
 
-        endpoint = pa_sprintf_malloc("%s/%s", A2DP_SINK_ENDPOINT, a2dp_codec->name);
-        endpoint_init(y, endpoint);
-        pa_xfree(endpoint);
+        if (!pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_A2DP_SOURCE)) {
+            endpoint = pa_sprintf_malloc("%s/%s", A2DP_SINK_ENDPOINT, a2dp_codec->name);
+            endpoint_init(y, endpoint);
+            pa_xfree(endpoint);
+        }
 
-        endpoint = pa_sprintf_malloc("%s/%s", A2DP_SOURCE_ENDPOINT, a2dp_codec->name);
-        endpoint_init(y, endpoint);
-        pa_xfree(endpoint);
+        if (!pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_A2DP_SINK)) {
+            endpoint = pa_sprintf_malloc("%s/%s", A2DP_SOURCE_ENDPOINT, a2dp_codec->name);
+            endpoint_init(y, endpoint);
+            pa_xfree(endpoint);
+        }
     }
 
     get_managed_objects(y);
@@ -1793,13 +1799,17 @@ void pa_bluetooth_discovery_unref(pa_bluetooth_discovery *y) {
         for (i = 0; i < count; i++) {
             a2dp_codec = pa_bluetooth_a2dp_codec_iter(i);
 
-            endpoint = pa_sprintf_malloc("%s/%s", A2DP_SINK_ENDPOINT, a2dp_codec->name);
-            endpoint_done(y, endpoint);
-            pa_xfree(endpoint);
+            if (!pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_A2DP_SOURCE)) {
+                endpoint = pa_sprintf_malloc("%s/%s", A2DP_SINK_ENDPOINT, a2dp_codec->name);
+                endpoint_done(y, endpoint);
+                pa_xfree(endpoint);
+            }
 
-            endpoint = pa_sprintf_malloc("%s/%s", A2DP_SOURCE_ENDPOINT, a2dp_codec->name);
-            endpoint_done(y, endpoint);
-            pa_xfree(endpoint);
+            if (!pa_bluetooth_profile_is_disabled(y, PA_BLUETOOTH_PROFILE_A2DP_SINK)) {
+                endpoint = pa_sprintf_malloc("%s/%s", A2DP_SOURCE_ENDPOINT, a2dp_codec->name);
+                endpoint_done(y, endpoint);
+                pa_xfree(endpoint);
+            }
         }
 
         pa_dbus_connection_unref(y->connection);
