@@ -1,3 +1,12 @@
+pulseaudio (1:14.0-1) eos; urgency=medium
+
+  * Bump the epoch.
+
+    We need to carry the epoch of 1 in our version because we used to be
+    based on Ubuntu's package, which has an epoch of 1.
+
+ -- João Paulo Rechi Vita <jprvita@endlessos.com>  Wed, 30 Dec 2020 18:53:14 -0800
+
 pulseaudio (14.0-1) experimental; urgency=medium
 
   * New upstream version
