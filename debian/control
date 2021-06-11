@@ -3,9 +3,10 @@ Section: sound
 Priority: optional
 Maintainer: Pulseaudio maintenance team <pkg-pulseaudio-devel@lists.alioth.debian.org>
 Uploaders: Sjoerd Simons <sjoerd@debian.org>,
-    Felipe Sateler <fsateler@debian.org>
+    Felipe Sateler <fsateler@debian.org>,
+    Sebastien Bacher <seb128@debian.org>
 Build-Depends: debhelper-compat (= 12),
-    check,
+    check <!nocheck>,
     dh-exec,
     dpkg-dev (>= 1.17.14),
     intltool,
@@ -17,16 +18,12 @@ Build-Depends: debhelper-compat (= 12),
     libcap-dev [linux-any],
     libfftw3-dev,
     libglib2.0-dev,
-    libgstreamer1.0-dev,
-    libgstreamer-plugins-base1.0-dev,
     libgtk-3-dev,
     libice-dev,
     libjack-dev,
-    libjson-c-dev (>= 0.11),
     liblircclient-dev,
     libltdl-dev,
     liborc-0.4-dev,
-    libsamplerate0-dev,
     libsndfile1-dev,
     libsoxr-dev (>= 0.1.1),
     libspeexdsp-dev (>= 1.2~rc1),
@@ -55,7 +52,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, adduser,
   libpulse0 (= ${binary:Version}),
   pulseaudio-utils
 Recommends: rtkit, default-logind | logind, dbus-user-session
-Suggests: udev [linux-any], pavumeter, pavucontrol, paman, paprefs
+Suggests: udev [linux-any], pavumeter, pavucontrol, paprefs
 Description: PulseAudio sound server
  PulseAudio, previously known as Polypaudio, is a sound server for POSIX and
  WIN32 systems. It is a drop in replacement for the ESD sound server with

@@ -1,11 +1,53 @@
-pulseaudio (1:14.0-1) eos; urgency=medium
+pulseaudio (14.2-2) unstable; urgency=medium
 
-  * Bump the epoch.
+  * Stop installing the console kit module.
+    ConsoleKit was removed from debian, so it no longer brings any purpose
+    (Closes: #854327)
+  * Fix test failure in ppc64el.
+    Thanks to Faidon Liambotis <paravoid@debian.org> for the patch.
+    (Closes: #982740)
+  * Move the home directory of pulseaudio user to /run/pulse
+    /var/run is a symlink to /run so let's just use the canonical place
 
-    We need to carry the epoch of 1 in our version because we used to be
-    based on Ubuntu's package, which has an epoch of 1.
+ -- Felipe Sateler <fsateler@debian.org>  Fri, 26 Feb 2021 19:51:50 -0300
 
- -- João Paulo Rechi Vita <jprvita@endlessos.com>  Wed, 30 Dec 2020 18:53:14 -0800
+pulseaudio (14.2-1) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * Reduce Build-Depends
+    * Annotate check with <!nocheck>.
+    * Drop libsamplerate0-dev: It is deprecated and no longer enabled when
+      present. Given the lack of --enable-libsamplerate, it wasn't enabled
+      in a while.
+    * Drop libjson-c-dev: Since 10.0, pulseaudio has its own json parser.
+    (Closes: #979281)
+
+  [ Felipe Sateler ]
+  * Make pulsedsp use $LIB RPATH.
+    This way, if libpulsedsp is installed for both amd64 and i386, the
+    linker knows which one to use automatically.
+    Some extra escaping is necessary to prevent expansion via multiple
+    make/shell layers (Closes: #845802)
+  * New upstream version 14.2
+
+ -- Felipe Sateler <fsateler@debian.org>  Tue, 19 Jan 2021 14:31:45 -0300
+
+pulseaudio (14.1-1) unstable; urgency=medium
+
+  * New bugfix version
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 14 Jan 2021 15:07:31 +0100
+
+pulseaudio (14.0-2) unstable; urgency=medium
+
+  * Upload to unstable
+  * debian/control, debian/rules:
+    - disable the gstreamer rtp option which is experimental
+  * debian/rules:
+    - use enable-stream-restore-clear-old-devices for better handleing
+      of upgraded systems
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 06 Jan 2021 12:03:26 +0100
 
 pulseaudio (14.0-1) experimental; urgency=medium
 

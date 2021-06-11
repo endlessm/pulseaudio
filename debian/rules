@@ -23,8 +23,10 @@ DEB_CONFIGURE_EXTRA_FLAGS = --enable-x11 --disable-hal-compat \
   --disable-bluez4 \
   --disable-esound \
   --enable-gsettings \
-  --enable-gstreamer \
-  --disable-gconf
+  --disable-gstreamer \
+  --disable-gconf \
+  --with-pulsedsp-location=/usr/\\\\'$$$$'LIB/pulseaudio \
+  --enable-stream-restore-clear-old-devices
 
 PA_MAJORMINOR = $(shell echo $(DEB_VERSION_UPSTREAM) | sed -r -e 's/^([0-9]+\.[0-9]+).*/\1/')
 
