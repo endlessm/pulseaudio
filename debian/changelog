@@ -1,3 +1,12 @@
+pulseaudio (1:14.2-2) eos; urgency=medium
+
+  * Bump the epoch
+
+    We need to carry the epoch of 1 in our version because we used to be
+    based on Ubuntu's package, which has an epoch of 1.
+
+ -- João Paulo Rechi Vita <jprvita@endlessos.org>  Thu, 10 Jun 2021 17:35:02 -0700
+
 pulseaudio (14.2-2) unstable; urgency=medium
 
   * Stop installing the console kit module.
